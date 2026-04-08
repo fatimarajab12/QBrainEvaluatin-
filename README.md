@@ -1,24 +1,33 @@
-# QBrain rag_lab (Jupyter + CLI)
+# QBrain RAG Lab
 
-Research workspace for QBrain RAG experiments:
+`QBrain/rag_lab` is the research and evaluation workspace for QBrain's Retrieval-Augmented Generation (RAG) pipeline.
+It is designed to answer one practical question: **how reliably can we turn SRS documents into grounded QA outputs?**
 
-- Ingestion/chunking/indexing (FAISS + OpenAI embeddings)
-- Retrieval + generation
-- Structured benchmark (retrieval, generation, end-to-end)
-- Paper-ready outputs (tables/figures)
-- Optional RAGAS secondary evaluation
+This repository includes:
 
-## 1) Project structure
+- document ingestion and chunking
+- vector indexing (FAISS + embeddings)
+- retrieval + answer generation
+- structured benchmark evaluation
+- paper-ready tables and figures
+- optional RAGAS-based secondary evaluation
+
+## Demo
+
+- Prototype walkthrough video: [Watch on Google Drive](https://drive.google.com/file/d/1irk-1AWHVviviPdNAYdpFCI1CAQXnGHE/view?usp=sharing)
+
+## Repository layout
 
 ```text
 QBrain/rag_lab/
 ├── pyproject.toml
+├── requirements.txt
 ├── .env
 ├── src/qbrain_rag/
-│   ├── config/            # settings from environment
-│   ├── infrastructure/    # document loaders, embeddings, vector store, LLM
-│   ├── application/       # chunking, feature extraction, evaluation utilities
-│   └── services/          # RAGService facade
+│   ├── config/
+│   ├── infrastructure/
+│   ├── application/
+│   └── services/
 ├── scripts/
 │   ├── run_ingestion.py
 │   ├── run_retrieval.py
@@ -37,16 +46,16 @@ QBrain/rag_lab/
 │   ├── 09_paper_retrieval_generation_eval.ipynb
 │   └── 10_ragas_eval.ipynb
 ├── data/
-│   ├── srs/               # SRS files (.pdf/.txt)
-│   ├── ground_truth/retrieval/
+│   ├── srs/
 │   ├── benchmarks/rag_eval/questions/
+│   ├── ground_truth/retrieval/
 │   └── outputs/evaluation/rag_benchmark/
 └── results/
     ├── tables/
     └── figures/
 ```
 
-## 2) Setup
+## Setup
 
 ```powershell
 cd D:\Qbrainpython\QBrain\rag_lab
@@ -54,70 +63,124 @@ python -m venv .venv
 .\.venv\Scripts\activate
 pip install -U pip
 pip install -r requirements.txt
-copy .env.example .env
 ```
 
-Set `OPENAI_API_KEY` in `.env`.
+Configure `.env` in `QBrain/rag_lab`:
 
-Optional environment variables:
+- `OPENAI_API_KEY` (required)
+- `OPENAI_MODEL` (optional, default `gpt-4o-mini`)
+- `RAG_TOP_K` (optional, default `5`)
+- `GENERATION_TEMPERATURE` (optional)
 
-- `OPENAI_MODEL` (default: `gpt-4o-mini`)
-- `RAG_TOP_K` (default: `5`)
-- `GENERATION_TEMPERATURE` (default from config)
+## Pipeline overview
 
-## 3) Core pipeline
+For each SRS evaluation run:
 
-The implemented pipeline is:
-
-1. Load SRS file (`.pdf`, `.txt`)
+1. Load document (`.pdf`/`.txt`)
 2. Chunk text (`chunk_size=2000`, `chunk_overlap=300`)
-3. Embed chunks (`text-embedding-3-small`)
-4. Build FAISS vector store + metadata
+3. Create embeddings (`text-embedding-3-small`)
+4. Build FAISS index
 5. Retrieve top-k chunks
 6. Generate answer (`gpt-4o-mini`)
-7. Evaluate against ground truth
+7. Compare generated output to ground truth
 
-## 4) Quick CLI usage
+### RAG step-by-step details
+
+For each question, the system does the following:
+
+1. Reads the target SRS file from `QBrain/rag_lab/data/srs/`.
+2. Splits the document into overlapping chunks (`2000` size, `300` overlap).
+3. Converts each chunk into an embedding using `text-embedding-3-small`.
+4. Stores embeddings in FAISS with metadata (`source_file`, `chunk_id`).
+5. Embeds the question and retrieves top-k relevant chunks (`k=5` by default).
+6. Injects retrieved chunks into the prompt context.
+7. Generates an answer with `gpt-4o-mini`.
+8. Compares generated answer with `expected_answer` using semantic similarity.
+9. Records retrieval, generation, and end-to-end metrics.
+
+This makes answers grounded in the actual SRS content rather than relying on the model's internal memory alone.
+
+## Quick commands
 
 ```powershell
-# stage 1: ingestion
+# ingestion preview
 python scripts/run_ingestion.py data/srs/your_file.pdf
 
-# stage 2-3: indexing + retrieval
+# retrieval check
 python scripts/run_retrieval.py --doc data/srs/your_file.pdf --query "Your question" -k 5
 
-# feature extraction + test cases
+# feature + test generation
 python scripts/run_document_pipeline.py data/srs/your_file.pdf --max-features 5
 
-# optional index sanity check
+# index sanity check
 python scripts/verify_rag_index.py
 ```
 
-## 5) Benchmark and evaluation (all question files)
+## Benchmark evaluation
 
-Run full benchmark on all `retrieval_ground_truth*.json` files:
+Run full benchmark across all question files:
 
 ```powershell
 python scripts/run_rag_benchmark.py --k 5 --threshold 0.72 --max-questions-per-srs 10
 ```
 
-Run with threshold sweep (recommended for paper analysis):
+Run threshold sweep (recommended for analysis):
 
 ```powershell
 python scripts/run_rag_benchmark.py --k 5 --threshold 0.72 --max-questions-per-srs 10 --threshold-sweep 0.65,0.68,0.70,0.72,0.75
 ```
 
-Single ground-truth file evaluation:
+Run a single ground-truth file:
 
 ```powershell
 python scripts/run_ground_truth_eval.py --gt data/ground_truth/retrieval/retrieval_ground_truth.json -k 5 --threshold 0.72
 ```
 
-## 6) Output files (what to use in paper)
+## Evaluation scope
 
-### Benchmark outputs
+`run_rag_benchmark.py` reads:
 
-`data/outputs/evaluation/rag_benchmark/`
+- `data/benchmarks/rag_eval/questions/retrieval_ground_truth*.json`
+
+Current full benchmark includes:
+
+- `retrieval_ground_truth_ertms.json` -> `2007 - ertms.pdf` (10 questions)
+- `retrieval_ground_truth_keepass.json` -> `2008 - keepass.pdf` (10 questions)
+- `retrieval_ground_truth_inventory.json` -> `2009 - inventory 2.0.pdf` (10 questions)
+- `retrieval_ground_truth_gparted.json` -> `2010 - gparted.pdf` (5 questions)
+- `retrieval_ground_truth.json` -> `JDECo_SRS.docx[1].pdf` (10 questions)
+
+Total full run: **45 questions** on **5 SRS files**.
+
+## Metrics reported
+
+### Retrieval
+
+- `hit_at_k`
+- `precision_at_k`
+- `recall_at_k`
+- `mrr`
+
+### Generation
+
+- semantic `similarity` (expected vs generated)
+- `gen_correct` based on threshold
+- `generation_accuracy`
+- `generation_avg_similarity`
+
+### End-to-end
+
+- `e2e_success` (retrieval + generation pass)
+- `e2e_success_rate`
+- `failure_type` (`pass`, `generation_fail`, `retrieval_fail`)
+
+## Output files
+
+Main output directory:
+
+- `data/outputs/evaluation/rag_benchmark/`
+
+Key files:
 
 - `overall_summary.csv`
 - `benchmark_full_results.csv`
@@ -131,145 +194,28 @@ python scripts/run_ground_truth_eval.py --gt data/ground_truth/retrieval/retriev
 - `diagnostics/failure_breakdown.csv`
 - `diagnostics/metrics_by_category.csv`
 
-### Paper-ready assets
+## Paper workflow
 
-`results/tables/` and `results/figures/`
+1. Run benchmark (`run_rag_benchmark.py`)
+2. Open `notebooks/09_paper_retrieval_generation_eval.ipynb`
+   - exports benchmark tables and figures
+3. Open `notebooks/10_ragas_eval.ipynb`
+   - exports RAGAS tables
 
-- From notebook `09_*`: overall/per-SRS tables + figures
-- From notebook `10_*`: RAGAS tables
+Generated paper assets:
 
-## 7) Notebook workflow for paper
+- `results/tables/`
+- `results/figures/`
 
-1. Run full benchmark:
-   - `scripts/run_rag_benchmark.py` with your final settings
-2. Open:
-   - `notebooks/09_paper_retrieval_generation_eval.ipynb`
-   - Exports core benchmark tables/plots
-3. Open:
-   - `notebooks/10_ragas_eval.ipynb`
-   - Exports RAGAS-based secondary evaluation
+## RAGAS (optional secondary evaluation)
 
-## 8) RAGAS notes
-
-- Install once if needed:
+Install dependencies if needed:
 
 ```powershell
 python -m pip install ragas datasets langchain-openai -U
 ```
 
-- `10_ragas_eval.ipynb` expects benchmark output with `retrieved_contexts_json` (already produced by current `run_rag_benchmark.py`).
-- RAGAS may print warnings like:
-  - deprecation notices
-  - "LLM returned 1 generations instead of requested 3"
-  These are not fatal; evaluation still completes.
-
-## 9) Ground truth files
-
-- Benchmark set folder:
-  - `data/benchmarks/rag_eval/questions/retrieval_ground_truth*.json`
-- Single-file eval default:
-  - `data/ground_truth/retrieval/retrieval_ground_truth.json`
-
-Keep `srs_file` values exactly matching filenames in `data/srs/`.
-
-## 10) Suggested citation sentence (experimental settings)
-
-> We evaluate QBrain on five SRS documents using manually curated retrieval QA ground truth. We report retrieval (Hit@k/Precision@k/Recall@k/MRR), generation accuracy via semantic similarity thresholds, end-to-end success, and complementary RAGAS metrics.
-
-## 11) Prototype demo video
-
-- Full prototype walkthrough (upload, analysis, and QA generation):
-  [Watch on Google Drive](https://drive.google.com/file/d/1irk-1AWHVviviPdNAYdpFCI1CAQXnGHE/view?usp=sharing)
-
-## 12) Detailed evaluation explanation (what exactly is evaluated)
-
-This section explains exactly what is evaluated, on which files/questions, how metrics are computed, and where every result is saved.
-
-### A) Evaluation scope (files and questions)
-
-`run_rag_benchmark.py` reads all files matching:
-
-- `data/benchmarks/rag_eval/questions/retrieval_ground_truth*.json`
-
-Current benchmark set includes:
-
-- `retrieval_ground_truth_ertms.json` (10 questions) -> `2007 - ertms.pdf`
-- `retrieval_ground_truth_keepass.json` (10 questions) -> `2008 - keepass.pdf`
-- `retrieval_ground_truth_inventory.json` (10 questions) -> `2009 - inventory 2.0.pdf`
-- `retrieval_ground_truth_gparted.json` (5 questions) -> `2010 - gparted.pdf`
-- `retrieval_ground_truth.json` (10 questions) -> `JDECo_SRS.docx[1].pdf`
-
-Total in full run: **45 questions** over **5 SRS files**.
-
-### B) What happens for each question
-
-For every question item in ground truth:
-
-1. Load target SRS from `data/srs/<srs_file>`
-2. Chunk + embed + index in FAISS
-3. Retrieve top-k chunks (default `k=5`)
-4. Generate answer with LLM (`gpt-4o-mini`)
-5. Compare generated answer with `expected_answer` using semantic similarity
-6. Mark `gen_correct` using threshold (for example `0.72`)
-
-### C) Metrics that are reported
-
-#### Retrieval metrics
-
-- `hit_at_k`: whether relevant file appears in top-k
-- `precision_at_k`: retrieved relevant / k
-- `recall_at_k`: retrieved relevant / number of relevant files
-- `mrr`: reciprocal rank of first relevant retrieval
-
-#### Generation metrics
-
-- `similarity`: semantic similarity between expected vs generated answer
-- `gen_correct`: `similarity >= threshold`
-- `generation_accuracy`: average of `gen_correct`
-- `generation_avg_similarity`: average similarity over all questions
-
-#### End-to-end metrics
-
-- `e2e_success`: retrieval success AND generation correctness
-- `e2e_success_rate`: average success across questions
-- `failure_type`: `pass`, `generation_fail`, or `retrieval_fail`
-
-### D) Threshold sweep (calibration only)
-
-When `--threshold-sweep` is enabled, the pipeline recomputes generation/e2e success for multiple thresholds **without changing model or retrieval pipeline**.
-
-Use this for analysis:
-
-```powershell
-python scripts/run_rag_benchmark.py --k 5 --threshold 0.72 --max-questions-per-srs 10 --threshold-sweep 0.65,0.68,0.70,0.72,0.75
-```
-
-### E) Where each result is saved
-
-Main folder:
-
-- `data/outputs/evaluation/rag_benchmark/`
-
-Important files:
-
-- `overall_summary.csv` -> top-level final metrics
-- `benchmark_full_results.csv` -> full per-question raw output
-- `threshold_sweep.csv` -> threshold sensitivity analysis
-
-Subfolders:
-
-- `retrieval/retrieval_by_question.csv` -> retrieval details per question
-- `retrieval/retrieval_summary_by_srs.csv` -> retrieval averages per SRS
-- `generation/generation_by_question.csv` -> generated answers + similarity per question
-- `generation/generation_summary_by_srs.csv` -> generation averages per SRS
-- `e2e/e2e_by_question.csv` -> end-to-end status per question
-- `e2e/e2e_summary_by_srs.csv` -> end-to-end averages per SRS
-- `diagnostics/failure_breakdown.csv` -> counts of pass/failure types
-- `diagnostics/metrics_by_category.csv` -> category-level summary
-
-### F) RAGAS evaluation (secondary evaluation)
-
-Notebook:
+RAGAS notebook:
 
 - `notebooks/10_ragas_eval.ipynb`
 
@@ -277,7 +223,7 @@ Input:
 
 - `data/outputs/evaluation/rag_benchmark/benchmark_full_results.csv`
 
-Output:
+Outputs:
 
 - `results/tables/ragas_by_question.csv`
 - `results/tables/ragas_overall_summary.csv`
@@ -285,16 +231,116 @@ Output:
 - `results/tables/ragas_overall_summary.tex`
 - `results/tables/ragas_summary_by_srs.tex`
 
-RAGAS metrics used:
+Notes:
 
-- `faithfulness`
-- `answer_relevancy`
-- `answer_correctness`
+- Warnings such as deprecation notices or "LLM returned 1 generations..." may appear.
+- These warnings are non-fatal as long as files are produced successfully.
 
-### G) Recommended reading order for paper writing
+## Ground truth references
 
-1. Start with `overall_summary.csv`
-2. Use `e2e_summary_by_srs.csv` for per-document table
-3. Use `failure_breakdown.csv` for diagnostics paragraph
-4. Use `threshold_sweep.csv` for calibration figure/table
-5. Add RAGAS summaries from `results/tables/` as complementary validation
+- Multi-file benchmark set:
+  - `data/benchmarks/rag_eval/questions/retrieval_ground_truth*.json`
+- Single-file default:
+  - `data/ground_truth/retrieval/retrieval_ground_truth.json`
+
+Ensure each `srs_file` value exactly matches the filename present in `data/srs/`.
+
+## Latest run results (benchmark + RAGAS)
+
+The following results come from a full benchmark run on:
+
+- 5 SRS files
+- 45 total questions
+- `k=5`
+- baseline threshold `0.72`
+- threshold sweep `0.65,0.68,0.70,0.72,0.75`
+
+Command used:
+
+```powershell
+python scripts/run_rag_benchmark.py --k 5 --threshold 0.72 --max-questions-per-srs 10 --threshold-sweep 0.65,0.68,0.70,0.72,0.75
+```
+
+### Benchmark summary
+
+- `retrieval_hit@5`: **1.000**
+- `retrieval_precision@5`: **0.200**
+- `retrieval_recall@5`: **1.000**
+- `retrieval_mrr`: **1.000**
+- `generation_accuracy_sim>=0.72`: **0.6889**
+- `generation_avg_similarity`: **0.7850**
+- `e2e_success_rate`: **0.6889**
+
+Benchmark summary table:
+
+| Metric | Value |
+|---|---:|
+| SRS files | 5 |
+| Questions | 45 |
+| Retrieval Hit@5 | 1.0000 |
+| Retrieval Precision@5 | 0.2000 |
+| Retrieval Recall@5 | 1.0000 |
+| Retrieval MRR | 1.0000 |
+| Generation Accuracy (sim >= 0.72) | 0.6889 |
+| Generation Avg Similarity | 0.7850 |
+| End-to-End Success Rate | 0.6889 |
+
+### Failure breakdown
+
+- `pass`: **31**
+- `generation_fail`: **14**
+- `retrieval_fail`: **0**
+
+Failure percentages:
+
+- pass rate: **68.89%** (31/45)
+- generation failure rate: **31.11%** (14/45)
+- retrieval failure rate: **0.00%** (0/45)
+
+Per-SRS end-to-end results:
+
+| SRS file | Questions | Retrieval Hit Rate | Generation Accuracy | E2E Success |
+|---|---:|---:|---:|---:|
+| `2007 - ertms.pdf` | 10 | 1.00 | 0.90 | 0.90 |
+| `2008 - keepass.pdf` | 10 | 1.00 | 0.70 | 0.70 |
+| `2009 - inventory 2.0.pdf` | 10 | 1.00 | 0.60 | 0.60 |
+| `2010 - gparted.pdf` | 5 | 1.00 | 0.60 | 0.60 |
+| `JDECo_SRS.docx[1].pdf` | 10 | 1.00 | 0.60 | 0.60 |
+
+### Threshold sweep (generation/e2e success)
+
+- `0.65` -> **0.8667**
+- `0.68` -> **0.8222**
+- `0.70` -> **0.7778**
+- `0.72` -> **0.6889**
+- `0.75` -> **0.6222**
+
+Threshold sweep table:
+
+| Threshold | Generation Accuracy | E2E Success | Generation Fail Count | Pass Count |
+|---:|---:|---:|---:|---:|
+| 0.65 | 0.8667 | 0.8667 | 6 | 39 |
+| 0.68 | 0.8222 | 0.8222 | 8 | 37 |
+| 0.70 | 0.7778 | 0.7778 | 10 | 35 |
+| 0.72 | 0.6889 | 0.6889 | 14 | 31 |
+| 0.75 | 0.6222 | 0.6222 | 17 | 28 |
+
+### RAGAS summary (full run, 45 questions)
+
+- `faithfulness`: **0.9410**
+- `answer_relevancy`: **0.8240**
+- `answer_correctness`: **0.6693**
+
+RAGAS summary table:
+
+| RAGAS metric | Value |
+|---|---:|
+| Faithfulness | 0.9410 |
+| Answer Relevancy | 0.8240 |
+| Answer Correctness | 0.6693 |
+
+Result locations:
+
+- Benchmark CSVs: `QBrain/rag_lab/data/outputs/evaluation/rag_benchmark/`
+- RAGAS tables: `QBrain/rag_lab/results/tables/`
+- Figures/tables for paper: `QBrain/rag_lab/results/figures/` and `QBrain/rag_lab/results/tables/`

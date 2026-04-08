@@ -1,0 +1,37 @@
+[
+  {
+    "question_id": "q_gparted_01",
+    "question": "What is GParted and which backend library does it use to manipulate partitions?",
+    "srs_file": "2010 - gparted.pdf",
+    "expected_answer": "GParted is a graphical partition editor (the GNOME Partition Editor), a frontend to GNU Parted that uses the libparted library to detect devices, manipulate partition tables, and perform partition operations.",
+    "relevant_files": ["2010 - gparted.pdf"]
+  },
+  {
+    "question_id": "q_gparted_02",
+    "question": "What are the two different versions of the GParted project described in the project scope?",
+    "srs_file": "2010 - gparted.pdf",
+    "expected_answer": "The document describes GParted as an install version on a Linux hard drive, and GParted Live distributed as a zip or iso file used to boot the computer from CD or USB.",
+    "relevant_files": ["2010 - gparted.pdf"]
+  },
+  {
+    "question_id": "q_gparted_03",
+    "question": "How does the LiveCD version of this GParted release behave regarding RAM, reboot, and installation?",
+    "srs_file": "2010 - gparted.pdf",
+    "expected_answer": "The LiveCD application runs at system boot, resides in RAM, and disappears after reboot; no installation is necessary in any operating system.",
+    "relevant_files": ["2010 - gparted.pdf"]
+  },
+  {
+    "question_id": "q_gparted_04",
+    "question": "Who is the intended audience of this software requirements specification?",
+    "srs_file": "2010 - gparted.pdf",
+    "expected_answer": "The document is intended for casual users, developers, testers, and documentation writers.",
+    "relevant_files": ["2010 - gparted.pdf"]
+  },
+  {
+    "question_id": "q_gparted_05",
+    "question": "In what order are the System Features in section 3 described?",
+    "srs_file": "2010 - gparted.pdf",
+    "expected_answer": "System Features in section 3 are described in order of appearance as the application runs.",
+    "relevant_files": ["2010 - gparted.pdf"]
+  }
+]

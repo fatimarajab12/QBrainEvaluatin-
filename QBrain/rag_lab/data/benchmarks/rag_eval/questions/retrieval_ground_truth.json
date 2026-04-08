@@ -1,0 +1,72 @@
+[
+  {
+    "question_id": "q_jdeco_01",
+    "question": "How can a customer submit a new service request in JDECo-SMS?",
+    "srs_file": "JDECo_SRS.docx[1].pdf",
+    "expected_answer": "Customers can submit service requests through the JDECo-SMS mobile application or website, providing required details and supporting documents for the requested service.",
+    "relevant_files": ["JDECo_SRS.docx[1].pdf"]
+  },
+  {
+    "question_id": "q_jdeco_02",
+    "question": "Who are the main user roles or departments involved in processing service requests?",
+    "srs_file": "JDECo_SRS.docx[1].pdf",
+    "expected_answer": "The SRS describes workflows involving customer service (CS), technical distribution (TD), finance (FD), and customers interacting with JDECo-SMS.",
+    "relevant_files": ["JDECo_SRS.docx[1].pdf"]
+  },
+  {
+    "question_id": "q_jdeco_03",
+    "question": "What happens if the customer does not pay the requested amount within 60 days after the payment request?",
+    "srs_file": "JDECo_SRS.docx[1].pdf",
+    "expected_answer": "If the customer does not pay within 60 days, the request is deleted from the system.",
+    "relevant_files": ["JDECo_SRS.docx[1].pdf"]
+  },
+  {
+    "question_id": "q_jdeco_04",
+    "question": "Which external systems does JDECo-SMS integrate with?",
+    "srs_file": "JDECo_SRS.docx[1].pdf",
+    "expected_answer": "JDECo-SMS is integrated mainly with the inventory system and the billing system.",
+    "relevant_files": ["JDECo_SRS.docx[1].pdf"]
+  },
+  {
+    "question_id": "q_jdeco_05",
+    "question": "What happens if inventory items needed for installation are not available in stock?",
+    "srs_file": "JDECo_SRS.docx[1].pdf",
+    "expected_answer": "The customer is notified that the service will be delayed until all requested items are available in JDECo stock.",
+    "relevant_files": ["JDECo_SRS.docx[1].pdf"]
+  },
+  {
+    "question_id": "q_jdeco_06",
+    "question": "What fee applies to non-refundable requests, and when can the customer cancel a request?",
+    "srs_file": "JDECo_SRS.docx[1].pdf",
+    "expected_answer": "Customers pay 81 NIS for any non-refundable request. They may cancel or change the request before it is approved by CS and before it is transferred to TD for a site visit.",
+    "relevant_files": ["JDECo_SRS.docx[1].pdf"]
+  },
+  {
+    "question_id": "q_jdeco_07",
+    "question": "What happens if the Technical Department arrives for a site visit and finds the site closed?",
+    "srs_file": "JDECo_SRS.docx[1].pdf",
+    "expected_answer": "TD notifies the system that the site was closed; TD and the customer see the notification, and TD returns to scheduling a new time for a second visit.",
+    "relevant_files": ["JDECo_SRS.docx[1].pdf"]
+  },
+  {
+    "question_id": "q_jdeco_08",
+    "question": "Where will JDECo-SMS be hosted in production?",
+    "srs_file": "JDECo_SRS.docx[1].pdf",
+    "expected_answer": "The system will be hosted internally at the JDECo head office in Jerusalem, on JDECo infrastructure; hosting in a third-party environment is optional.",
+    "relevant_files": ["JDECo_SRS.docx[1].pdf"]
+  },
+  {
+    "question_id": "q_jdeco_09",
+    "question": "What happens to a service request if the customer does not follow up on its progress?",
+    "srs_file": "JDECo_SRS.docx[1].pdf",
+    "expected_answer": "If the customer does not follow up, the request is deleted automatically from the system after 60 days.",
+    "relevant_files": ["JDECo_SRS.docx[1].pdf"]
+  },
+  {
+    "question_id": "q_jdeco_10",
+    "question": "According to design constraints, when can an approved request be canceled for non-payment?",
+    "srs_file": "JDECo_SRS.docx[1].pdf",
+    "expected_answer": "The request is canceled if it was approved and the customer did not pay the invoice after six months.",
+    "relevant_files": ["JDECo_SRS.docx[1].pdf"]
+  }
+]

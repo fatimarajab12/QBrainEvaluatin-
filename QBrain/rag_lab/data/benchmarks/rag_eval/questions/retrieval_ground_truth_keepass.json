@@ -1,0 +1,72 @@
+﻿[
+  {
+    "question_id": "q_keepass_01",
+    "question": "What release/version of KeePass Password Safe does this SRS document describe?",
+    "srs_file": "2008 - keepass.pdf",
+    "expected_answer": "The SRS describes KeePass Password Safe requirements for version 1.10.",
+    "relevant_files": ["2008 - keepass.pdf"]
+  },
+  {
+    "question_id": "q_keepass_02",
+    "question": "What is the core purpose of KeePass according to the Purpose section?",
+    "srs_file": "2008 - keepass.pdf",
+    "expected_answer": "Its core purpose is to solve password memorization issues by storing passwords and related account data in a secure encrypted database protected by a master password.",
+    "relevant_files": ["2008 - keepass.pdf"]
+  },
+  {
+    "question_id": "q_keepass_03",
+    "question": "What licensing statement is given for KeePass in the introduction?",
+    "srs_file": "2008 - keepass.pdf",
+    "expected_answer": "KeePass is described as OSI Certified Open Source Software distributed under GNU General Public License version 2 or later.",
+    "relevant_files": ["2008 - keepass.pdf"]
+  },
+  {
+    "question_id": "q_keepass_04",
+    "question": "What does the SRS say happens if the master password or key is lost?",
+    "srs_file": "2008 - keepass.pdf",
+    "expected_answer": "If the master password/key is lost, the database cannot be opened and there is no recovery password or back door.",
+    "relevant_files": ["2008 - keepass.pdf"]
+  },
+  {
+    "question_id": "q_keepass_05",
+    "question": "How are user data organized inside KeePass according to Product Perspective?",
+    "srs_file": "2008 - keepass.pdf",
+    "expected_answer": "User data are organized in a database using groups and subgroups that contain entries such as usernames, passwords, URLs, and related data.",
+    "relevant_files": ["2008 - keepass.pdf"]
+  },
+  {
+    "question_id": "q_keepass_06",
+    "question": "Which user-facing feature in the table of contents supports automated credential entry?",
+    "srs_file": "2008 - keepass.pdf",
+    "expected_answer": "The feature is Auto-Type, listed as system feature 3.15.",
+    "relevant_files": ["2008 - keepass.pdf"]
+  },
+  {
+    "question_id": "q_keepass_07",
+    "question": "Which feature in section 3 is specifically about creating passwords?",
+    "srs_file": "2008 - keepass.pdf",
+    "expected_answer": "Feature 3.20 is Password Generator, which is specifically about password creation.",
+    "relevant_files": ["2008 - keepass.pdf"]
+  },
+  {
+    "question_id": "q_keepass_08",
+    "question": "What does the SRS mention about one-time password capability?",
+    "srs_file": "2008 - keepass.pdf",
+    "expected_answer": "The SRS mentions the ability to create a one-time key/password that can be used once in a transaction to reduce reuse risk.",
+    "relevant_files": ["2008 - keepass.pdf"]
+  },
+  {
+    "question_id": "q_keepass_09",
+    "question": "Which audiences are explicitly mentioned for this document and system?",
+    "srs_file": "2008 - keepass.pdf",
+    "expected_answer": "The document explicitly mentions audiences such as developers, testers, users, documentation writers, advanced end users, desktop end users, and system administrators.",
+    "relevant_files": ["2008 - keepass.pdf"]
+  },
+  {
+    "question_id": "q_keepass_10",
+    "question": "What references are provided for obtaining more information about KeePass?",
+    "srs_file": "2008 - keepass.pdf",
+    "expected_answer": "The references include SourceForge project pages and the official KeePass website at keepass.info.",
+    "relevant_files": ["2008 - keepass.pdf"]
+  }
+]

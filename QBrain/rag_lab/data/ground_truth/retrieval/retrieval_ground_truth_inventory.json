@@ -1,0 +1,72 @@
+﻿[
+  {
+    "question_id": "q_inventory_01",
+    "question": "What is the purpose of this Inventory Management SRS document?",
+    "srs_file": "2009 - inventory 2.0.pdf",
+    "expected_answer": "The purpose is to define requirements for the Inventory Management System proposed by Construction Junction staff.",
+    "relevant_files": ["2009 - inventory 2.0.pdf"]
+  },
+  {
+    "question_id": "q_inventory_02",
+    "question": "What is the stated scope of the Inventory Management project?",
+    "srs_file": "2009 - inventory 2.0.pdf",
+    "expected_answer": "The scope is to create a categorized inventory management system providing functionality identified by the Construction Junction team, with requirements prioritized by sponsors.",
+    "relevant_files": ["2009 - inventory 2.0.pdf"]
+  },
+  {
+    "question_id": "q_inventory_03",
+    "question": "What does the overview say the system enables staff to do?",
+    "srs_file": "2009 - inventory 2.0.pdf",
+    "expected_answer": "It enables staff to create, maintain, and view inventory contents and value in categorized form, and to trace donated items from donation through sale.",
+    "relevant_files": ["2009 - inventory 2.0.pdf"]
+  },
+  {
+    "question_id": "q_inventory_04",
+    "question": "Which external systems does the inventory system integrate with according to the overview?",
+    "srs_file": "2009 - inventory 2.0.pdf",
+    "expected_answer": "It integrates with QuickBooks Point of Sale software and the organization's website.",
+    "relevant_files": ["2009 - inventory 2.0.pdf"]
+  },
+  {
+    "question_id": "q_inventory_05",
+    "question": "Who is defined as an Administrator actor in the actors section?",
+    "srs_file": "2009 - inventory 2.0.pdf",
+    "expected_answer": "An Administrator is a Construction Junction staff member who can perform any Inventory Management function.",
+    "relevant_files": ["2009 - inventory 2.0.pdf"]
+  },
+  {
+    "question_id": "q_inventory_06",
+    "question": "How does the Director role differ from the Manager role?",
+    "srs_file": "2009 - inventory 2.0.pdf",
+    "expected_answer": "A Director can do Manager functions and additionally view, create, modify, and delete Inventory Management users.",
+    "relevant_files": ["2009 - inventory 2.0.pdf"]
+  },
+  {
+    "question_id": "q_inventory_07",
+    "question": "What are the responsibilities of a Receiving Associate?",
+    "srs_file": "2009 - inventory 2.0.pdf",
+    "expected_answer": "A Receiving Associate receives donated items at receiving docks, performs initial system entry, and provides donor receipts.",
+    "relevant_files": ["2009 - inventory 2.0.pdf"]
+  },
+  {
+    "question_id": "q_inventory_08",
+    "question": "What does use case 3.1 View Inventory require the system to provide?",
+    "srs_file": "2009 - inventory 2.0.pdf",
+    "expected_answer": "It requires a categorized view of entire inventory where users navigate from departments to categories, subcategories, and individual inventory items.",
+    "relevant_files": ["2009 - inventory 2.0.pdf"]
+  },
+  {
+    "question_id": "q_inventory_09",
+    "question": "Which major requirement chapters are listed after detailed functional requirements in the table of contents?",
+    "srs_file": "2009 - inventory 2.0.pdf",
+    "expected_answer": "After detailed functional requirements, the table lists high-level functional requirements and supplementary requirements.",
+    "relevant_files": ["2009 - inventory 2.0.pdf"]
+  },
+  {
+    "question_id": "q_inventory_10",
+    "question": "What supplementary requirement categories are explicitly listed in section 5?",
+    "srs_file": "2009 - inventory 2.0.pdf",
+    "expected_answer": "The listed categories include usability, availability, reliability, security, performance, interfaces, client platform, data migration, disaster recovery/backups/business continuity, maintainability, portability, legal/copyright notices, licensing, and applicable standards.",
+    "relevant_files": ["2009 - inventory 2.0.pdf"]
+  }
+]

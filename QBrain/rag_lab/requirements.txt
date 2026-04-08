@@ -1,0 +1,3 @@
+# Single source of dependency versions: pyproject.toml
+# Installs the qbrain-rag package in editable mode + Jupyter (optional dev extra).
+-e .[dev]

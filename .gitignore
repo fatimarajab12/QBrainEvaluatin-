@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.env
+
+# RAG outputs / indexes
+evaluation_py/rag_lab/data/indices/
+evaluation_py/rag_lab/data/outputs/
+evaluation_py/pdfs/outputs/
+
+# Jupyter mini-lab (QBrain)
+QBrain/rag_lab/data/outputs/
+.ipynb_checkpoints/

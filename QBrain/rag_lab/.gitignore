@@ -1,0 +1,12 @@
+.venv/
+.env
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+data/outputs/*
+!data/outputs/.gitkeep
+results/tables/*
+!results/tables/.gitkeep
+results/figures/*
+!results/figures/.gitkeep
+data/faiss_cache/

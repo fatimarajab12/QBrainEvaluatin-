@@ -273,7 +273,7 @@ python scripts/run_rag_benchmark.py --k 5 --threshold 0.72 --max-questions-per-s
 
 Benchmark summary table:
 
-| Metric | Value |
+a~~ ` | Metric | Value |
 |---|---:|
 | SRS files | 5 |
 | Questions | 45 |
@@ -344,3 +344,34 @@ Result locations:
 - Benchmark CSVs: `QBrain/rag_lab/data/outputs/evaluation/rag_benchmark/`
 - RAGAS tables: `QBrain/rag_lab/results/tables/`
 - Figures/tables for paper: `QBrain/rag_lab/results/figures/` and `QBrain/rag_lab/results/tables/`
+
+## RAG vs No-RAG (artifact comparison)
+
+This comparison evaluates the document pipeline outputs (features shared, test cases compared per feature):
+
+- Target SRS: `data/srs/JDECo_SRS.docx[1].pdf`
+- Notebook: `QBrain/rag_lab/notebooks/11_compare_rag_vs_no_rag.ipynb`
+- Mode:
+  - RAG: semantic top-k retrieval per feature
+  - No-RAG baseline: `random_k_matched` (same `k` and context budget, but no semantic retrieval)
+- Run config:
+  - `top_k=5`
+  - `context_budget=24000`
+  - `temperature=0.0`
+  - `features_compared=9`
+
+### Comparison summary
+
+- `testcases_total`: **50** (RAG) vs **43** (No-RAG)
+- `schema_valid_rate`: **1.000** vs **1.000**
+- `avg_completeness`: **0.9133** vs **0.9070**
+- `avg_steps`: **4.24** vs **4.19**
+- `steps_ge_3_rate`: **1.000** vs **0.9767**
+- Feature-level wins by testcase count: **RAG 6**, **No-RAG 0**, **Ties 3**
+
+### Output files
+
+- Raw side-by-side output: `QBrain/rag_lab/results/tables/rag_vs_no_rag/rag_vs_no_rag_raw.json`
+- Run metadata: `QBrain/rag_lab/results/tables/rag_vs_no_rag/rag_vs_no_rag_run_meta.json`
+- Aggregate table: `QBrain/rag_lab/results/tables/rag_vs_no_rag/rag_vs_no_rag_summary.csv`
+- Per-feature table: `QBrain/rag_lab/results/tables/rag_vs_no_rag/rag_vs_no_rag_per_feature.csv`

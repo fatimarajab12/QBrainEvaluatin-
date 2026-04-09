@@ -1,0 +1,11 @@
+question_id,category,srs_file,hit_at_k,gen_correct,failure_type,similarity,e2e_success
+q_ertms_01,direct,2007 - ertms.pdf,1.0,True,pass,0.893969349472849,True
+q_ertms_02,direct,2007 - ertms.pdf,1.0,True,pass,0.7859169011554045,True
+q_keepass_01,direct,2008 - keepass.pdf,1.0,False,generation_fail,0.41293372043022625,False
+q_keepass_02,direct,2008 - keepass.pdf,1.0,False,generation_fail,0.5757198889572617,False
+q_inventory_01,direct,2009 - inventory 2.0.pdf,1.0,True,pass,0.8908644847565744,True
+q_inventory_02,direct,2009 - inventory 2.0.pdf,1.0,True,pass,0.8677594635391768,True
+q_gparted_01,direct,2010 - gparted.pdf,1.0,True,pass,0.9100874793121672,True
+q_gparted_02,direct,2010 - gparted.pdf,1.0,True,pass,0.757567186084667,True
+q_jdeco_01,direct,JDECo_SRS.docx[1].pdf,1.0,True,pass,0.9216273042827037,True
+q_jdeco_02,direct,JDECo_SRS.docx[1].pdf,1.0,False,generation_fail,0.5536620942636751,False

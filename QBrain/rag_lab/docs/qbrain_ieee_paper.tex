@@ -1,0 +1,409 @@
+\documentclass[conference]{IEEEtran}
+
+\usepackage{cite}
+\usepackage{graphicx}
+\usepackage[hidelinks]{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\title{QBrain: RAG-Based System for Automated Software Requirements Analysis and Test Case Generation}
+
+\author{Anonymous Author(s)}
+
+\lstset{
+  basicstyle=\ttfamily\footnotesize,
+  breaklines=true,
+  frame=single,
+  columns=fullflexible
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This paper introduces QBrain, a specialized system designed to automate the analysis of software requirements and the creation of structured test cases. Utilizing Retrieval-Augmented Generation (RAG), the framework links natural language documents to testing workflows via a RAG semantic search and generation pipeline. This approach specifically addresses common AI limitations, such as hallucinations and poor formatting. It accomplishes this by grounding outputs in retrieved evidence and enforcing a predefined schema. Although experimental results demonstrate that the system achieves perfect retrieval accuracy, we note that the precision of the generated text still requires further improvement. Overall, this work shows that combining semantic indexing with large language models (LLMs) provides a more reliable method for ensuring traceability and coverage in software quality assurance.
+\end{abstract}
+
+\begin{IEEEkeywords}
+RAG, Software Testing, SRS Analysis, Test Case Generation, NLP, QA Automation
+\end{IEEEkeywords}
+
+\section{Introduction}
+\label{sec:intro}
+
+Modern software systems are increasingly complex, making precise specification, validation, and continuous quality assurance essential across the software lifecycle~\cite{sommerville2015}. Software requirements, typically documented in Software Requirements Specifications (SRS), define expected functionality and constraints and guide downstream activities including design, implementation, and verification~\cite{sommerville2015,ieee29148}.
+
+Software testing plays a central role in validating that implemented behavior satisfies requirements and stakeholder expectations~\cite{wang2025}. However, as project scale and requirement volume increase, maintaining strong alignment between requirements and test artifacts becomes increasingly challenging~\cite{wang2025}. A key enabler of this alignment is \textit{requirements traceability}, i.e., the ability to relate requirements to downstream artifacts such as test cases and verification results~\cite{palo2003}. Traceability supports coverage analysis, impact assessment, and verification completeness~\cite{palo2003}.
+
+In requirements-driven testing, test cases should ideally be derived directly from SRS clauses. In practice, this transformation remains largely manual, time-consuming, and error-prone, especially in large and heterogeneous requirement repositories~\cite{wang2025,RE2025SurveyRBTG}. Recent advances in Large Language Models (LLMs) have enabled promising automation for requirements analysis and test generation~\cite{hou2024llm4se,brown2020}. Nevertheless, prior studies report recurring issues, including hallucinations, weak grounding in source requirements, and inconsistent output structure~\cite{ji2023,RE2025SurveyRBTG}.
+
+Retrieval-Augmented Generation (RAG) mitigates part of these issues by conditioning generation on retrieved domain context~\cite{lewis2020}. Recent RAG-based approaches show improved alignment with source documents and reduced manual effort~\cite{arora2024,RE2025RAGinSE}. However, existing methods still do not jointly ensure: (1) structured and reusable test-case outputs, (2) strong grounding in source requirements, and (3) practical traceability between SRS content and generated artifacts under realistic constraints~\cite{Ghosh2023NLPTestCases,Khurshid2021AutomatedTCG,Kumar2025NLRequirements,RE2025SurveyRBTG,RE2025RAGinSE}.
+
+Motivated by this gap, we propose \textbf{QBrain}, a retrieval-augmented system for feature extraction and test-case generation from SRS text. Semantic retrieval and LLM generation jointly produce structured artifacts aligned with the source. The system supports (i)~a question-answering benchmark with \emph{per-query} top-$k$ retrieval---each question triggers an independent retrieval of $k$ chunks from the indexed SRS---and (ii)~a document workflow that derives features from ordered chunks and generates schema-constrained test cases with \emph{per-feature} top-$k'$ retrieval (Sec.~\ref{sec:notation}).
+
+The contributions are: (1)~a unified RAG design linking requirements to tests with lightweight trace hints; (2)~a FAISS-backed embedding pipeline for evidence grounding; (3)~schema-constrained test cases (preconditions, steps, expected results); and (4)~a three-level evaluation protocol (retrieval, generation, end-to-end) with per-item and aggregate reporting.
+
+The remainder of the paper is organized as follows. Section~\ref{sec:related} reviews related work. Section~\ref{sec:methodology} describes the method. Section~\ref{sec:experiments} gives experimental settings. Section~\ref{sec:results} presents results. Section~\ref{sec:limitations} discusses limitations. Section~\ref{sec:conclusion} concludes.
+
+\section{Related Work}
+\label{sec:related}
+
+The literature on automated test-case generation has evolved through several stages, reflecting advances in how natural-language requirements are processed and transformed into structured QA artifacts. This evolution spans from rule-based and model-driven approaches, to NLP-based pipelines, and more recently to Large Language Model (LLM) and Retrieval-Augmented Generation (RAG) systems~\cite{Khurshid2021AutomatedTCG,Kumar2025NLRequirements,Arora2024RAGTAG,RE2025SurveyRBTG}. Beyond technological differences, these approaches vary significantly in their ability to support structured outputs, grounding in source requirements, and practical traceability.
+
+\subsection{Rule-Based and Model-Driven Approaches}
+
+Early work on requirements-based test-case generation relies on rule-based or model-driven techniques that derive test cases from formal or semi-formal specifications, such as state machines or requirement templates~\cite{Khurshid2021AutomatedTCG,Li2010MiningTestCases}. These approaches typically involve requirement classification, pattern matching, and mapping to predefined test structures.
+
+A key advantage of these methods is their ability to maintain strong and explicit trace links between requirements and generated test artifacts, which facilitates coverage analysis and impact assessment~\cite{Khurshid2021AutomatedTCG}. However, they are inherently limited by their reliance on manually engineered rules and structured inputs. As a result, they struggle to handle large-scale, heterogeneous, and ambiguous natural-language SRS documents, making them less suitable for modern software systems.
+
+\subsection{NLP-Based Requirement Analysis and Test Generation}
+
+With the rise of natural language processing and transformer-based models, researchers have developed pipelines that extract structured information directly from SRS text. An NLP-based framework combining embeddings, dependency parsing, and template-based generation was proposed to produce structured test cases from natural-language requirements~\cite{Kumar2025NLRequirements}. Similarly, NLP techniques have been integrated with historical test data to enhance test-case generation and prioritization~\cite{Ghosh2023NLPTestCases}.
+
+Compared to rule-based systems, NLP-based approaches are more flexible and scalable, as they can process diverse linguistic patterns and large document collections. However, traceability in these systems is typically implicit, as they do not maintain explicit links between individual requirement clauses and generated test cases. In addition, many NLP-based pipelines produce partially structured outputs that require manual refinement, limiting their effectiveness in fully automated QA workflows~\cite{Kumar2025NLRequirements}.
+
+\subsection{LLM-Based and RAG-Augmented Approaches}
+
+Recent advances in large language models have enabled end-to-end generation of test cases and QA artifacts directly from natural-language requirements. Surveys in requirements-based testing identify LLM-based approaches as a major emerging direction, highlighting their ability to generate fluent and diverse outputs~\cite{RE2025SurveyRBTG,RE2025RAGinSE}. However, these models often suffer from hallucinations, weak grounding in source requirements, and inconsistencies in output structure~\cite{ji2023,RE2025SurveyRBTG}.
+
+Retrieval-Augmented Generation (RAG) addresses some of these limitations by conditioning generation on retrieved document context. Arora et al. demonstrate that RAG-based systems improve alignment with source requirements and reduce manual effort in test-case generation tasks~\cite{Arora2024RAGTAG}. By incorporating retrieval, these systems provide stronger contextual grounding compared to standalone LLM approaches.
+
+Nevertheless, current RAG-based methods still face several limitations. First, traceability is often limited to implicit associations between retrieved context and generated outputs, without explicit mapping between requirement clauses and test cases. Second, structural guarantees remain weak, as many systems generate free-text or semi-structured outputs that require further processing. Third, systematic evaluation across different retrieval and generation configurations remains limited, particularly in controlled experimental settings.
+
+\subsection{Positioning of the Proposed Work}
+
+Taken together, prior work highlights a key gap: existing approaches do not simultaneously ensure structured output, strong grounding, and practical traceability within a unified framework. Instead, these properties are often addressed independently, leading to trade-offs between flexibility, interpretability, and automation.
+
+In this context, QBrain is a retrieval-augmented framework for SRS understanding and structured test-case generation, combining semantic retrieval, context-conditioned generation, and a fixed output schema.
+
+Compared with prior work, QBrain:
+\begin{itemize}
+\item enforces a structured test-case schema (preconditions, steps, expected results);
+\item links outputs to SRS text through optional anchors (\texttt{matchedSections}) and retrieved passages for approximate traceability;
+\item grounds generation in retrieved requirements rather than in unconstrained model completion alone.
+\end{itemize}
+
+Traceability in QBrain is implemented in a lightweight and heuristic manner, based on contextual grounding and attribution cues rather than strict one-to-one mappings between requirement clauses and generated test cases.
+
+The contribution is an end-to-end, retrieval-grounded pipeline that combines grounding, structured generation, and lightweight traceability for requirements-driven QA automation.
+
+\section{Methodology}
+\label{sec:methodology}
+
+This section formalizes QBrain for SRS question answering and structured test-case synthesis. Generation is conditioned on retrieved chunks and evaluated at retrieval, generation, and end-to-end levels.
+
+\subsection{Methodological Objective}
+
+The objective is twofold: outputs should be fluent and supported by retrieved requirement text. Evaluation therefore separates:
+\begin{itemize}
+    \item retrieval quality,
+    \item generation quality (embedding similarity to references),
+    \item end-to-end success (both must succeed).
+\end{itemize}
+
+\subsection{Notation and Hyperparameters}
+\label{sec:notation}
+
+Table~\ref{tab:notation} lists the main symbols and defaults used in the implementation and experiments. \emph{Per-query top-$k$} means that for each benchmark question $q$, the retriever returns the $k$ chunks with highest embedding similarity to $q$ from that run's FAISS index (one SRS per index in our benchmark). \emph{Per-feature top-$k'$} means that for each extracted feature $f$, retrieval uses a query built from $f$'s text and optional \texttt{matchedSections}, returning $k'$ chunks. Retrieval metrics (Hit@$k$, Precision@$k$, Recall@$k$, MRR) are computed at the same cutoff~$k$ as prompt construction unless stated otherwise.
+
+\begin{table}[t]
+\centering
+\caption{Notation and default hyperparameters.}
+\label{tab:notation}
+\begin{tabular}{@{}p{0.14\columnwidth}p{0.76\columnwidth}@{}}
+\hline
+Symbol & Meaning \\
+\hline
+$k$ & Cutoff for QA retrieval and for QA retrieval metrics: $k{=}5$ chunks per question. \\
+$k'$ & Cutoff for test-case retrieval: $k'{=}8$ chunks per feature (implementation default). \\
+$c$, $o$ & Text chunk length and overlap (characters): $c{=}2000$, $o{=}300$. \\
+$T$ & Decoding temperature for benchmark short answers; $T{=}0.1$. \\
+\hline
+\end{tabular}
+\end{table}
+
+Embedding and chat models for reported runs are OpenAI \texttt{text-embedding-3-small} (indexing and answer scoring) and \texttt{gpt-4o-mini} (generation). Feature and test-case JSON steps may use a different decoding temperature in the implementation; the QA benchmark uses~$T$ as above.
+
+\subsection{Pipeline Design}
+
+The QA workflow follows a structured sequential pipeline:
+
+\begin{enumerate}
+    \item \textbf{Document preparation:} the SRS document is loaded, normalized when needed, and segmented into overlapping chunks to preserve local context.
+    \item \textbf{Semantic indexing:} each chunk is converted into a dense embedding and stored in a FAISS vector index.
+    \item \textbf{Retrieval:} for each question, \emph{per-query} top-$k$ retrieval returns the $k$ highest-similarity chunks (Table~\ref{tab:notation}).
+    \item \textbf{Generation:} the chat model generates an answer using the retrieved chunks as explicit evidence-grounding context.
+    \item \textbf{Scoring:} the generated answer is compared to the reference using embedding cosine similarity (Table~\ref{tab:notation}).
+\end{enumerate}
+
+This stage-wise ordering supports transparent localization of failures to retrieval or generation.
+
+\subsection{Dual-Pipeline Design and Traceability Representation}
+
+Two pipelines are used:
+
+\begin{itemize}
+    \item \textbf{QA benchmark:} chunking ($c$, $o$), FAISS indexing, per-query top-$k$ retrieval with $k{=}5$ (Section~\ref{sec:experiments}), short-answer generation at temperature~$T$, and three-level evaluation.
+
+    \item \textbf{Features and tests:} features are extracted from the SRS by presenting the model with chunks in document order, up to a character limit; an index is built first for later use, but feature extraction itself is not query-specific retrieval. Test cases are then generated per feature using per-feature top-$k'$ retrieval with $k'{=}8$ (Table~\ref{tab:notation}) over a query built from the feature text and optional \texttt{matchedSections} fields, followed by JSON generation under the test-case schema.
+\end{itemize}
+
+Traceability is heuristic: \texttt{matchedSections} and retrieved text support manual interpretation but do not define formal clause-to-test trace matrices.
+
+\subsection{Retrieval and Generation Strategy}
+
+Retrieval is $k$-nearest-neighbor search in embedding space, which tolerates lexical variation in requirements. Prompts include retrieved text so that answers and tests cite the supplied context.
+
+\subsection{Evaluation Logic}
+
+Evaluation uses three levels:
+
+\begin{itemize}
+    \item \textbf{Retrieval:} Hit@$k$, Precision@$k$, Recall@$k$, and MRR from ranked chunks (and file metadata).
+    \item \textbf{Generation:} cosine similarity of answer embeddings.
+    \item \textbf{End-to-end:} joint analysis of retrieval quality and generation similarity.
+\end{itemize}
+
+Failures are analyzed by retrieval outcomes and generation quality.
+
+\subsection{Benchmark Annotation}
+
+Each benchmark item contains a question, a reference answer, and relevance metadata (including the expected source file when one SRS is indexed per run). This supports independent checks of retrieval, generation, and the full pipeline.
+
+\subsection{Reproducibility}
+
+Hyperparameters follow Table~\ref{tab:notation} unless a sensitivity study is noted. Per-question results and aggregates are recorded in tabular form for replication and comparison.
+
+\section{Experimental Settings}
+\label{sec:experiments}
+
+This section specifies the setup for the SRS question-answering benchmark from ingestion through answer generation.
+
+\subsection{Experimental Design}
+
+The QA benchmark uses the hyperparameters in Table~\ref{tab:notation}: recursive character chunking with $(c,o){=}(2000,300)$, \texttt{text-embedding-3-small} embeddings, FAISS, per-query top-$k{=}5$ retrieval into the prompt, and \texttt{gpt-4o-mini} answers at temperature~$T{=}0.1$. The feature/test pipeline uses per-feature top-$k'{=}8$ by default, independent of~$k$.
+
+\subsection{Evaluation Data and Reference Annotations}
+
+The benchmark uses five SRS documents and forty-five hand-built questions. Each record stores the question, reference answer, and relevance metadata (including the expected source file when each run indexes one document).
+
+\subsection{Evaluation Metrics and Protocol}
+
+Evaluation proceeds at three levels:
+
+\begin{itemize}
+    \item \textbf{Retrieval:} Hit@$k$, Precision@$k$, Recall@$k$, and MRR, computed over retrieved chunk metadata (including source file identifiers).
+    \item \textbf{Generation:} cosine similarity between embeddings of reference and generated answers (same model as indexing).
+    \item \textbf{End-to-end:} joint interpretation of retrieval outcomes with generation similarity.
+\end{itemize}
+
+Joint reporting reduces the risk of interpreting strong retrieval alone as overall success, or fluent but ungrounded answers as correct.
+
+\subsection{Analysis and Reproducibility Strategy}
+
+Runs produce per-query and per-document summaries, including failure-type counts and similarity distributions.
+
+\subsection{Rationale}
+
+For requirements QA, both finding the right passage and stating the answer matter; the split failure taxonomy indicates which stage dominates errors.
+
+\section{Results \& Discussion}
+\label{sec:results}
+
+\subsection{Document-Pipeline Output Example (JDECo)}
+
+To illustrate artifact structure beyond benchmark scores, we ran the document pipeline on \texttt{JDECo\_SRS.docx[1].pdf}. The pipeline processes the source document through chunking, FAISS indexing, feature extraction, and per-feature retrieval-augmented test-case generation, then exports a structured JSON artifact.
+
+\begin{table}[h]
+\centering
+\caption{JDECo document-pipeline output summary.}
+\label{tab:jdeco_output_summary}
+\begin{tabular}{lc}
+\hline
+Metric & Value \\
+\hline
+Source file & JDECo\_SRS.docx[1].pdf \\
+Text length (chars) & 45,175 \\
+Chunks & 30 \\
+Extracted features (total) & 10 \\
+Features used for test generation & 5 \\
+Generated test cases & 26 \\
+\hline
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:jdeco_output_summary} shows that the pipeline produces a non-trivial set of structured QA artifacts from a single SRS file. The full generated outputs are available in the project repository\footnote{\url{https://github.com/fatimarajab12/QBrainEvaluatin-/tree/main/QBrain/rag_lab/results/paper_output_sample}}.
+
+\begin{lstlisting}[caption={Abridged JSON artifact generated from JDECo SRS.},label={lst:jdeco_json_output}]
+{
+  "source_file": "JDECo_SRS.docx[1].pdf",
+  "text_length": 45175,
+  "chunk_count": 30,
+  "features": [
+    {
+      "featureId": "feature_001",
+      "name": "Service Request Submission",
+      "featureType": "FUNCTIONAL",
+      "matchedSections": [
+        "Request a service from JDECo",
+        "Stimulus/Response Sequences"
+      ],
+      "testCases": [
+        {
+          "testCaseId": "TC_001",
+          "title": "Verify service request submission with valid data",
+          "steps": [
+            "Access portal/app",
+            "Fill required fields",
+            "Upload documents",
+            "Submit request"
+          ],
+          "expectedResult": "Request is saved and customer is notified."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "feature_count": 5,
+    "test_cases_skipped": false
+  }
+}
+\end{lstlisting}
+
+Listing~\ref{lst:jdeco_json_output} highlights the three-level output schema: document-level metadata, feature-level semantic representation, and structured test cases per feature. This structure improves QA usability and provides lightweight traceability through \texttt{matchedSections}.
+
+\subsection{Overall Performance}
+
+QBrain was evaluated on five SRS documents and forty-five queries. Table~\ref{tab:overall_results} summarizes retrieval, generation, and end-to-end outcomes.
+
+\begin{table}[h]
+\centering
+\caption{Overall benchmark results.}
+\label{tab:overall_results}
+\begin{tabular}{lc}
+\hline
+Metric & Value \\
+\hline
+SRS files & 5 \\
+Questions & 45 \\
+Retrieval Hit@5 & 1.0000 \\
+Retrieval Precision@5 & 0.2000 \\
+Retrieval Recall@5 & 1.0000 \\
+Retrieval MRR & 1.0000 \\
+Generation mean semantic similarity & 0.7868 \\
+End-to-end success rate & 0.6889 \\
+\hline
+\end{tabular}
+\end{table}
+
+Hit@5, Recall@5, and MRR are~1.0: every query retrieves at least one chunk from the relevant file at rank~1 under the benchmark definition. Precision@5 is~0.2 because, with one file per index and five chunks returned, file-level precision@5 is bounded by~$1/5$ when a single correct file label is counted among the top~$k$.
+
+\subsection{Generation Performance}
+
+Generation quality shows a mean answer similarity of~0.7868, indicating partial but incomplete alignment with references.
+
+\subsection{Failure Analysis}
+
+Table~\ref{tab:failure_analysis} shows that all failures are generation failures under this protocol.
+
+\begin{table}[h]
+\centering
+\caption{Failure analysis breakdown.}
+\label{tab:failure_analysis}
+\begin{tabular}{lc}
+\hline
+Category & Value \\
+\hline
+Pass cases & 31 (68.89\%) \\
+Generation failures & 14 (31.11\%) \\
+Retrieval failures & 0 (0.00\%) \\
+\hline
+\end{tabular}
+\end{table}
+
+Retrieval is stable on this benchmark; generation is the bottleneck.
+
+\subsection{RAG vs.\ Non-RAG Comparison}
+
+We compare RAG-based test-case generation to a baseline that replaces similarity retrieval with random chunk sampling under otherwise matched settings.
+
+\begin{table}[h]
+\centering
+\caption{RAG vs.\ random-context baseline for test artifacts.}
+\label{tab:rag_vs_norag}
+\begin{tabular}{lcc}
+\hline
+Metric & RAG & No-RAG \\
+\hline
+Features compared & 9 & 9 \\
+Test cases generated & 50 & 43 \\
+Schema-valid rate & 1.0000 & 1.0000 \\
+Average completeness & 0.9133 & 0.9070 \\
+Average steps per test case & 4.24 & 4.19 \\
+\hline
+\end{tabular}
+\end{table}
+
+RAG produces more valid-schema tests with slightly higher completeness and step counts. By feature, RAG wins six comparisons, ties three, and loses none; numerical gains are small.
+
+\subsection{Per-SRS Performance}
+
+\begin{table}[h]
+\centering
+\caption{Per-SRS performance.}
+\label{tab:per_srs_results}
+\begin{tabular}{lccc}
+\hline
+SRS file & Retrieval Hit@5 & Generation accuracy & E2E success \\
+\hline
+ERTMS (2007) & 1.00 & 0.90 & 0.90 \\
+KeePass (2008) & 1.00 & 0.70 & 0.70 \\
+Inventory (2009) & 1.00 & 0.60 & 0.60 \\
+GParted (2010) & 1.00 & 0.60 & 0.60 \\
+JDECo SRS & 1.00 & 0.60 & 0.60 \\
+\hline
+\end{tabular}
+\end{table}
+
+Differences across SRS files may reflect document style and difficulty.
+
+\subsection{RAGAS-Based Evaluation}
+
+\begin{table}[h]
+\centering
+\caption{RAGAS metrics on the benchmark sample.}
+\label{tab:ragas}
+\begin{tabular}{lc}
+\hline
+Metric & Value \\
+\hline
+Faithfulness & 0.9410 \\
+Answer relevancy & 0.8240 \\
+Answer correctness & 0.6693 \\
+\hline
+\end{tabular}
+\end{table}
+
+Faithfulness and relevancy exceed answer correctness, consistent with grounded but inexact wording relative to references.
+
+\subsection{Discussion}
+
+Retrieval is strong on this corpus; generation remains the weak link. RAG improves test artifacts slightly over random context, but does not remove formulation errors. Open directions include tighter decoding constraints and richer generation metrics beyond embedding similarity.
+
+\section{Limitations and Practical Considerations}
+\label{sec:limitations}
+
+The evaluation is small (five SRS, forty-five questions) and uses publicly oriented documents; industrial generalization is not established. Near-perfect retrieval metrics may partly reflect benchmark construction (single-file indices, aligned Q/A pairs) rather than difficulty comparable to multi-product archives. Heuristic trace fields do not replace certified trace matrices. Test cases are not executed against systems; executability is unknown.
+
+We plan to enlarge and diversify corpora, add stronger baselines, refine traceability, and study execution-level test validation where applicable.
+
+\section{Conclusion and Future Work}
+\label{sec:conclusion}
+
+QBrain combines dense retrieval with schema-constrained LLM generation for SRS question answering and test-case synthesis. On our benchmark, retrieval metrics are strong and RAGAS faithfulness is high, while generation quality remains below retrieval performance; RAG modestly improves structural test metrics over a random-context baseline. Claims are limited to the reported corpus; larger studies, richer trace models, and run-time validation are left to future work.
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}

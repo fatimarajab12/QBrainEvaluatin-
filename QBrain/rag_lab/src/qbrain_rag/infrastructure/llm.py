@@ -33,17 +33,40 @@ _SYSTEM_RAG_EVAL = """You are an evaluation-time QA assistant.
 
 Answer using ONLY the provided context.
 Rules:
-1. Output a short factual answer (one sentence, or two at most).
-2. Do not add introductions, explanations, or assumptions.
-3. Prefer wording that stays close to the source text.
-4. If the answer is not explicitly present, output exactly: "Not stated in the provided context."
+1. Give a complete factual answer in one to three short sentences. Every claim must be supported by the context.
+2. When the context names a system, product, or document title, include that name when the question is about what something is, which version/release, or what the document describes (avoid bare fragments like only a version number unless the question asks for the number alone).
+3. No preamble ("According to the context..."), no closing commentary, no bullet lists unless the question clearly asks for a list.
+4. Prefer wording that keeps key terms from the source (names, version strings, role names) while staying grammatical.
+5. If the answer is not explicitly present, output exactly: "Not stated in the provided context."
 
 Context:
 {context}"""
 
 _USER_RAG_EVAL = """Question: {question}
 
-Return only the direct answer."""
+Answer directly with the facts needed; keep every statement grounded in the context above."""
+
+
+_DEFAULT_QA_MAX_DOCS = 5
+_DEFAULT_QA_MAX_CHARS_PER_CHUNK = 2000
+
+
+def _qa_context_from_docs(
+    docs,
+    *,
+    max_context_docs: int | None,
+    max_chars_per_chunk: int | None,
+) -> str:
+    seq = list(docs)
+    if max_context_docs is not None:
+        seq = seq[: max(0, int(max_context_docs))]
+    parts: list[str] = []
+    for d in seq:
+        text = getattr(d, "page_content", "") or ""
+        if max_chars_per_chunk is not None and len(text) > int(max_chars_per_chunk):
+            text = text[: int(max_chars_per_chunk)]
+        parts.append(text)
+    return "\n\n".join(parts)
 
 
 def _client_or_raise() -> OpenAI:
@@ -62,8 +85,14 @@ def answer_with_context(
     *,
     temperature: float | None = None,
     evaluation_mode: bool = False,
+    max_context_docs: int | None = _DEFAULT_QA_MAX_DOCS,
+    max_chars_per_chunk: int | None = _DEFAULT_QA_MAX_CHARS_PER_CHUNK,
 ) -> str:
-    context = "\n\n".join([d.page_content for d in docs])
+    context = _qa_context_from_docs(
+        docs,
+        max_context_docs=max_context_docs,
+        max_chars_per_chunk=max_chars_per_chunk,
+    )
     s = get_settings()
     temp = s.generation_temperature if temperature is None else temperature
     if evaluation_mode:
@@ -80,7 +109,7 @@ def answer_with_context(
         ],
         temperature=temp,
     )
-    return response.choices[0].message.content or ""
+    return (response.choices[0].message.content or "").strip()
 
 
 def complete_json_object(

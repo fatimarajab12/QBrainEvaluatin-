@@ -1,5 +1,5 @@
 """
-CLI: document → features (full-chunk LLM context) → test cases per feature (top-k RAG).
+CLI: document → features (single pass or segment+merge) → test cases per feature (multi-query RAG + evidence).
 
 Usage (from rag_lab/, with OPENAI_API_KEY in .env):
   python scripts/run_document_pipeline.py path/to/file.pdf
@@ -33,7 +33,7 @@ def main() -> None:
         "Default: no limit.",
     )
     p.add_argument("--skip-tests", action="store_true", help="Only extract features")
-    p.add_argument("--test-context-k", type=int, default=8, help="Top-k chunks per feature for tests")
+    p.add_argument("--test-context-k", type=int, default=5, help="Top-k unique chunks per feature for tests")
     p.add_argument("--quiet", action="store_true", help="No progress messages (stderr)")
     args = p.parse_args()
     doc = args.doc.resolve()

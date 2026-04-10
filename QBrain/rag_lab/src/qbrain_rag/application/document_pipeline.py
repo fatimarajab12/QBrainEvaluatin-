@@ -1,4 +1,4 @@
-"""Ingest a file → FAISS → LLM features (full-chunk context) → per-feature test cases (top-k RAG)."""
+"""Ingest a file → FAISS → LLM features (full context or segment+merge) → per-feature test cases (top-k RAG)."""
 from __future__ import annotations
 
 import sys
@@ -19,14 +19,15 @@ def _progress(msg: str) -> None:
 def run_document_pipeline(
     path: str | Path,
     *,
-    n_test_context_chunks: int = 8,
+    n_test_context_chunks: int = 5,
     max_features: int | None = None,
     skip_test_cases: bool = False,
     verbose: bool = True,
 ) -> dict[str, Any]:
     """
-    ``path``: PDF or text file. Feature step uses **all chunks** (capped by ``max_context_chars`` in
-    ``extract_features_from_indexed_chunks``, truncation at chunk boundaries when possible). Test step
+    ``path``: PDF or text file. Feature step uses **all chunks** in order: one LLM pass if the chunk count
+    is small, otherwise **segment extraction** (groups of chunks) plus a **merge/deduplication** pass
+    (see ``extract_features_from_indexed_chunks``; ``max_context_chars`` caps each segment). Test step
     uses **similarity_search** per feature (``n_test_context_chunks``).
 
     ``max_features``: if set, only the first N features in **LLM output order** receive test cases.
@@ -63,13 +64,13 @@ def run_document_pipeline(
             out_features.append({**f, "testCases": []})
             continue
         log(f"[doc] Tests for feature {i + 1}/{len(features)}: {name!r}...")
-        tcs = generate_test_cases_for_feature(
+        gen = generate_test_cases_for_feature(
             store,
             f,
             n_context_chunks=n_test_context_chunks,
         )
-        out_features.append({**f, "testCases": tcs})
-        log(f"[doc]   → {len(tcs)} test case(s)")
+        out_features.append({**f, "evidence": gen["evidence"], "testCases": gen["testCases"]})
+        log(f"[doc]   → {len(gen['testCases'])} test case(s)")
     log("[doc] Done.")
 
     return {

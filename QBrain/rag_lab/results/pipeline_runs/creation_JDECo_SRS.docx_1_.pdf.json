@@ -1,0 +1,864 @@
+{
+  "source_file": "JDECo_SRS.docx[1].pdf",
+  "text_length": 45175,
+  "chunk_count": 30,
+  "features": [
+    {
+      "featureId": "feature_001",
+      "name": "Service Request Management",
+      "description": "The system shall allow customers to request a service, update their service requests, and cancel service requests.",
+      "featureType": "FUNCTIONAL",
+      "priority": "High",
+      "status": "pending",
+      "acceptanceCriteria": [
+        "Customers can successfully submit a service request.",
+        "Customers can update their existing service requests.",
+        "Customers can cancel their service requests."
+      ],
+      "reasoning": "This feature is essential for customer interaction with the JDECo-SMS.",
+      "matchedSections": [
+        "Request a service.",
+        "Update Service Request.",
+        "Cancel Service Request."
+      ],
+      "confidence": 1.0,
+      "evidence": {
+        "retrieved_chunk_ids": [
+          28,
+          20,
+          16,
+          6,
+          26
+        ],
+        "matched_sections": [
+          "Request a service.",
+          "Update Service Request.",
+          "Cancel Service Request."
+        ],
+        "queries": {
+          "by_name": "Service Request Management",
+          "by_name_and_matched_sections": "Service Request Management Request a service. Update Service Request. Cancel Service Request.",
+          "by_description": "The system shall allow customers to request a service, update their service requests, and cancel service requests."
+        }
+      },
+      "testCases": [
+        {
+          "testCaseId": "TC_001",
+          "title": "Verify service request submission with valid data",
+          "description": "Ensure that a customer can successfully submit a new service request with all required information.",
+          "steps": [
+            "Register as a new customer or log in as an existing customer.",
+            "Fill in the service request form with valid details including name, identity number, and service type.",
+            "Upload all required supporting documents.",
+            "Submit the service request.",
+            "Check for a notification confirming the submission."
+          ],
+          "expectedResult": "The system confirms the submission of the service request and sends a notification to the customer.",
+          "priority": "high",
+          "status": "pending",
+          "preconditions": [
+            "Customer must have valid credentials or register as a new user.",
+            "All required fields must be filled out correctly."
+          ],
+          "testData": {},
+          "evidence": {
+            "retrieved_chunk_ids": [
+              28,
+              20,
+              16,
+              6,
+              26
+            ],
+            "matched_sections": [
+              "Request a service.",
+              "Update Service Request.",
+              "Cancel Service Request."
+            ]
+          }
+        },
+        {
+          "testCaseId": "TC_002",
+          "title": "Verify service request update functionality",
+          "description": "Ensure that a customer can update their service request after submission.",
+          "steps": [
+            "Submit a service request as a customer.",
+            "Access the submitted service request.",
+            "Make changes to the service request details.",
+            "Submit the updated service request.",
+            "Check for a notification confirming the update."
+          ],
+          "expectedResult": "The system confirms the update of the service request and sends a notification to the customer.",
+          "priority": "medium",
+          "status": "pending",
+          "preconditions": [
+            "Customer must have an existing service request to update."
+          ],
+          "testData": {},
+          "evidence": {
+            "retrieved_chunk_ids": [
+              28,
+              20,
+              16,
+              6,
+              26
+            ],
+            "matched_sections": [
+              "Request a service.",
+              "Update Service Request.",
+              "Cancel Service Request."
+            ]
+          }
+        },
+        {
+          "testCaseId": "TC_003",
+          "title": "Verify service request cancellation before assignment",
+          "description": "Ensure that a customer can cancel their service request before it is assigned to a technician.",
+          "steps": [
+            "Submit a service request as a customer.",
+            "Access the submitted service request.",
+            "Cancel the service request.",
+            "Check for a notification confirming the cancellation."
+          ],
+          "expectedResult": "The system confirms the cancellation of the service request and sends a notification to the customer.",
+          "priority": "high",
+          "status": "pending",
+          "preconditions": [
+            "Customer must have an existing service request that has not been assigned."
+          ],
+          "testData": {},
+          "evidence": {
+            "retrieved_chunk_ids": [
+              28,
+              20,
+              16,
+              6,
+              26
+            ],
+            "matched_sections": [
+              "Request a service.",
+              "Update Service Request.",
+              "Cancel Service Request."
+            ]
+          }
+        },
+        {
+          "testCaseId": "TC_004",
+          "title": "Verify service request cancellation after assignment",
+          "description": "Ensure that a customer is informed of any charges when canceling a service request that has been assigned to a technician.",
+          "steps": [
+            "Submit a service request as a customer.",
+            "Allow the service request to be assigned to a technician.",
+            "Cancel the service request.",
+            "Check for a notification regarding any applicable charges."
+          ],
+          "expectedResult": "The system informs the customer of any charges related to the cancellation of the service request.",
+          "priority": "medium",
+          "status": "pending",
+          "preconditions": [
+            "Customer must have an existing service request that has been assigned."
+          ],
+          "testData": {},
+          "evidence": {
+            "retrieved_chunk_ids": [
+              28,
+              20,
+              16,
+              6,
+              26
+            ],
+            "matched_sections": [
+              "Request a service.",
+              "Update Service Request.",
+              "Cancel Service Request."
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "featureId": "feature_002",
+      "name": "Service Status Tracking",
+      "description": "The system shall allow customers to view the status of their service requests, including the current status and estimated completion time.",
+      "featureType": "FUNCTIONAL",
+      "priority": "High",
+      "status": "pending",
+      "acceptanceCriteria": [
+        "Customers can view the current status of their service requests.",
+        "Customers can see the estimated time for service completion."
+      ],
+      "reasoning": "This feature enhances customer satisfaction by providing transparency.",
+      "matchedSections": [
+        "the customer could login to the system using the credential as the application number, and his receipt number and view where is the service now or stuck and the status, and the time needed to be finished."
+      ],
+      "confidence": 1.0,
+      "evidence": {
+        "retrieved_chunk_ids": [
+          16,
+          20,
+          8,
+          10,
+          21
+        ],
+        "matched_sections": [
+          "the customer could login to the system using the credential as the application number, and his receipt number and view where is the service now or stuck and the status, and the time needed to be finished."
+        ],
+        "queries": {
+          "by_name": "Service Status Tracking",
+          "by_name_and_matched_sections": "Service Status Tracking the customer could login to the system using the credential as the application number, and his receipt number and view where is the service now or stuck and the status, and the time needed to be finished.",
+          "by_description": "The system shall allow customers to view the status of their service requests, including the current status and estimated completion time."
+        }
+      },
+      "testCases": [
+        {
+          "testCaseId": "TC_001",
+          "title": "Verify service status after installation",
+          "description": "Ensure the system updates the service status to 'installed' after successful installation.",
+          "steps": [
+            "Simulate the installation of a service by the TD team.",
+            "Check the service status in the system.",
+            "Confirm that the status is updated to 'installed'."
+          ],
+          "expectedResult": "The service status is 'installed' and the customer is notified.",
+          "priority": "high",
+          "status": "pending",
+          "preconditions": [
+            "Service installation has been completed by the TD team."
+          ],
+          "testData": {},
+          "evidence": {
+            "retrieved_chunk_ids": [
+              16,
+              20,
+              8,
+              10,
+              21
+            ],
+            "matched_sections": [
+              "the customer could login to the system using the credential as the application number, and his receipt number and view where is the service now or stuck and the status, and the time needed to be finished."
+            ]
+          }
+        },
+        {
+          "testCaseId": "TC_002",
+          "title": "Verify notification for site check request",
+          "description": "Ensure the customer receives a notification after submitting a site check request.",
+          "steps": [
+            "Submit a new request under the name 'Site check' and pay the fees.",
+            "Check for notifications sent to the customer.",
+            "Confirm that the customer receives a notification regarding the site check request."
+          ],
+          "expectedResult": "The customer receives a notification confirming the site check request.",
+          "priority": "high",
+          "status": "pending",
+          "preconditions": [
+            "Customer has submitted a site check request and paid the fees."
+          ],
+          "testData": {},
+          "evidence": {
+            "retrieved_chunk_ids": [
+              16,
+              20,
+              8,
+              10,
+              21
+            ],
+            "matched_sections": [
+              "the customer could login to the system using the credential as the application number, and his receipt number and view where is the service now or stuck and the status, and the time needed to be finished."
+            ]
+          }
+        },
+        {
+          "testCaseId": "TC_003",
+          "title": "Verify status change after payment",
+          "description": "Ensure the request status changes to 'Paid' after the customer pays the requested amount.",
+          "steps": [
+            "Simulate the customer paying the requested amount within 60 days.",
+            "Check the status of the request in the system.",
+            "Confirm that the status is updated to 'Paid'."
+          ],
+          "expectedResult": "The request status is 'Paid' and notifications are sent to relevant departments.",
+          "priority": "high",
+          "status": "pending",
+          "preconditions": [
+            "A payment request has been generated and is within the 60-day payment window."
+          ],
+          "testData": {},
+          "evidence": {
+            "retrieved_chunk_ids": [
+              16,
+              20,
+              8,
+              10,
+              21
+            ],
+            "matched_sections": [
+              "the customer could login to the system using the credential as the application number, and his receipt number and view where is the service now or stuck and the status, and the time needed to be finished."
+            ]
+          }
+        },
+        {
+          "testCaseId": "TC_004",
+          "title": "Verify notification for service installation date",
+          "description": "Ensure the customer is notified of the installation date after the service is ready.",
+          "steps": [
+            "Simulate the service being marked as ready for installation.",
+            "Schedule a date for installation.",
+            "Check for notifications sent to the customer regarding the installation date."
+          ],
+          "expectedResult": "The customer receives a notification with the scheduled installation date.",
+          "priority": "high",
+          "status": "pending",
+          "preconditions": [
+            "All items required for installation are available."
+          ],
+          "testData": {},
+          "evidence": {
+            "retrieved_chunk_ids": [
+              16,
+              20,
+              8,
+              10,
+              21
+            ],
+            "matched_sections": [
+              "the customer could login to the system using the credential as the application number, and his receipt number and view where is the service now or stuck and the status, and the time needed to be finished."
+            ]
+          }
+        },
+        {
+          "testCaseId": "TC_005",
+          "title": "Verify request status after site check failure",
+          "description": "Ensure the request status is updated correctly if the site check fails.",
+          "steps": [
+            "Simulate a site check that fails due to technical issues.",
+            "Check the status of the request in the system.",
+            "Confirm that the status is updated to reflect the failure and the reason."
+          ],
+          "expectedResult": "The request status is updated to indicate failure and the customer is notified.",
+          "priority": "medium",
+          "status": "pending",
+          "preconditions": [
+            "A site check has been performed and has failed."
+          ],
+          "testData": {},
+          "evidence": {
+            "retrieved_chunk_ids": [
+              16,
+              20,
+              8,
+              10,
+              21
+            ],
+            "matched_sections": [
+              "the customer could login to the system using the credential as the application number, and his receipt number and view where is the service now or stuck and the status, and the time needed to be finished."
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "featureId": "feature_003",
+      "name": "SMS Notifications for Service Status",
+      "description": "The system shall send SMS notifications to customers regarding the status of their service requests and any required actions from their side.",
+      "featureType": "NOTIFICATION",
+      "priority": "Medium",
+      "status": "pending",
+      "acceptanceCriteria": [
+        "Customers receive SMS notifications about the status of their service requests.",
+        "Customers are notified if any action is required from their side."
+      ],
+      "reasoning": "This feature improves communication and customer engagement.",
+      "matchedSections": [
+        "the system could send SMS to the customer notifying with the status and if there and step needed from customer side."
+      ],
+      "confidence": 1.0,
+      "evidence": {
+        "retrieved_chunk_ids": [
+          7,
+          16,
+          8,
+          6,
+          15
+        ],
+        "matched_sections": [
+          "the system could send SMS to the customer notifying with the status and if there and step needed from customer side."
+        ],
+        "queries": {
+          "by_name": "SMS Notifications for Service Status",
+          "by_name_and_matched_sections": "SMS Notifications for Service Status the system could send SMS to the customer notifying with the status and if there and step needed from customer side.",
+          "by_description": "The system shall send SMS notifications to customers regarding the status of their service requests and any required actions from their side."
+        }
+      },
+      "testCases": [
+        {
+          "testCaseId": "TC_001",
+          "title": "Verify SMS notification for service installation",
+          "description": "Ensure customer receives SMS notification upon service installation.",
+          "steps": [
+            "Simulate the installation of the service by the TD team.",
+            "Observe the system's response to send an SMS notification.",
+            "Check the content of the SMS received by the customer."
+          ],
+          "expectedResult": "Customer receives an SMS stating that their service is installed and it's time to request a Site check.",
+          "priority": "high",
+          "status": "pending",
+          "preconditions": [
+            "Service installation must be completed by the TD team."
+          ],
+          "testData": {},
+          "evidence": {
+            "retrieved_chunk_ids": [
+              7,
+              16,
+              8,
+              6,
+              15
+            ],
+            "matched_sections": [
+              "the system could send SMS to the customer notifying with the status and if there and step needed from customer side."
+            ]
+          }
+        },
+        {
+          "testCaseId": "TC_002",
+          "title": "Verify SMS notification for site check request",
+          "description": "Ensure customer receives SMS notification when a site check request is submitted.",
+          "steps": [
+            "Customer submits a new request for a Site check and pays the fees.",
+            "Observe the system's response to notify the CS and TD.",
+            "Check the SMS received by the customer regarding the site check request."
+          ],
+          "expectedResult": "Customer receives an SMS confirming that their request for a Site check has been submitted.",
+          "priority": "high",
+          "status": "pending",
+          "preconditions": [
+            "Customer must submit a Site check request and pay the fees."
+          ],
+          "testData": {},
+          "evidence": {
+            "retrieved_chunk_ids": [
+              7,
+              16,
+              8,
+              6,
+              15
+            ],
+            "matched_sections": [
+              "the system could send SMS to the customer notifying with the status and if there and step needed from customer side."
+            ]
+          }
+        },
+        {
+          "testCaseId": "TC_003",
+          "title": "Verify SMS notification for scheduled site check date",
+          "description": "Ensure customer receives SMS notification with the scheduled date for the site check.",
+          "steps": [
+            "TD schedules a date for the site check.",
+            "Observe the system's response to notify the customer.",
+            "Check the SMS received by the customer with the scheduled date."
+          ],
+          "expectedResult": "Customer receives an SMS with the date of the scheduled site check.",
+          "priority": "high",
+          "status": "pending",
+          "preconditions": [
+            "Site check must be scheduled by the TD."
+          ],
+          "testData": {},
+          "evidence": {
+            "retrieved_chunk_ids": [
+              7,
+              16,
+              8,
+              6,
+              15
+            ],
+            "matched_sections": [
+              "the system could send SMS to the customer notifying with the status and if there and step needed from customer side."
+            ]
+          }
+        },
+        {
+          "testCaseId": "TC_004",
+          "title": "Verify SMS notification for test result of service installation",
+          "description": "Ensure customer receives SMS notification with the result of the service installation test.",
+          "steps": [
+            "TD performs a test on the service installation.",
+            "Observe the system's response based on the test result.",
+            "Check the SMS received by the customer regarding the test result."
+          ],
+          "expectedResult": "Customer receives an SMS with the result of the service installation test.",
+          "priority": "high",
+          "status": "pending",
+          "preconditions": [
+            "Service installation test must be completed by the TD."
+          ],
+          "testData": {},
+          "evidence": {
+            "retrieved_chunk_ids": [
+              7,
+              16,
+              8,
+              6,
+              15
+            ],
+            "matched_sections": [
+              "the system could send SMS to the customer notifying with the status and if there and step needed from customer side."
+            ]
+          }
+        },
+        {
+          "testCaseId": "TC_005",
+          "title": "Verify SMS notification for payment confirmation",
+          "description": "Ensure customer receives SMS notification upon payment confirmation.",
+          "steps": [
+            "Customer pays the requested amount for the service.",
+            "Observe the system's response to generate a payment confirmation.",
+            "Check the SMS received by the customer confirming the payment."
+          ],
+          "expectedResult": "Customer receives an SMS confirming the amount paid for the service.",
+          "priority": "high",
+          "status": "pending",
+          "preconditions": [
+            "Customer must complete the payment within the specified time frame."
+          ],
+          "testData": {},
+          "evidence": {
+            "retrieved_chunk_ids": [
+              7,
+              16,
+              8,
+              6,
+              15
+            ],
+            "matched_sections": [
+              "the system could send SMS to the customer notifying with the status and if there and step needed from customer side."
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "featureId": "feature_004",
+      "name": "User Authentication",
+      "description": "The system shall require users to have an active username and password with sufficient privileges to access the system.",
+      "featureType": "FUNCTIONAL",
+      "priority": "High",
+      "status": "pending",
+      "acceptanceCriteria": [
+        "Users must log in with a valid username and password.",
+        "Access is granted based on user privileges."
+      ],
+      "reasoning": "User authentication is critical for system security and data protection.",
+      "matchedSections": [
+        "users shall have an active username/password with sufficient privileges."
+      ],
+      "confidence": 1.0,
+      "evidence": {
+        "retrieved_chunk_ids": [
+          25,
+          5,
+          22,
+          11,
+          24
+        ],
+        "matched_sections": [
+          "users shall have an active username/password with sufficient privileges."
+        ],
+        "queries": {
+          "by_name": "User Authentication",
+          "by_name_and_matched_sections": "User Authentication users shall have an active username/password with sufficient privileges.",
+          "by_description": "The system shall require users to have an active username and password with sufficient privileges to access the system."
+        }
+      },
+      "testCases": [
+        {
+          "testCaseId": "TC_001",
+          "title": "Verify login with valid username and password",
+          "description": "Ensure that users can log in successfully with valid credentials.",
+          "steps": [
+            "Navigate to the login page of the system.",
+            "Enter a valid username and password.",
+            "Submit the login form.",
+            "Observe the outcome."
+          ],
+          "expectedResult": "User is successfully logged in and redirected to the homepage.",
+          "priority": "high",
+          "status": "pending",
+          "preconditions": [
+            "User must have an active username and password with sufficient privileges."
+          ],
+          "testData": {},
+          "evidence": {
+            "retrieved_chunk_ids": [
+              25,
+              5,
+              22,
+              11,
+              24
+            ],
+            "matched_sections": [
+              "users shall have an active username/password with sufficient privileges."
+            ]
+          }
+        },
+        {
+          "testCaseId": "TC_002",
+          "title": "Verify login failure with invalid username",
+          "description": "Ensure that the system does not allow login with an invalid username.",
+          "steps": [
+            "Navigate to the login page of the system.",
+            "Enter an invalid username and a valid password.",
+            "Submit the login form.",
+            "Observe the outcome."
+          ],
+          "expectedResult": "User receives an error message indicating invalid credentials.",
+          "priority": "high",
+          "status": "pending",
+          "preconditions": [],
+          "testData": {},
+          "evidence": {
+            "retrieved_chunk_ids": [
+              25,
+              5,
+              22,
+              11,
+              24
+            ],
+            "matched_sections": [
+              "users shall have an active username/password with sufficient privileges."
+            ]
+          }
+        },
+        {
+          "testCaseId": "TC_003",
+          "title": "Verify login failure with invalid password",
+          "description": "Ensure that the system does not allow login with an invalid password.",
+          "steps": [
+            "Navigate to the login page of the system.",
+            "Enter a valid username and an invalid password.",
+            "Submit the login form.",
+            "Observe the outcome."
+          ],
+          "expectedResult": "User receives an error message indicating invalid credentials.",
+          "priority": "high",
+          "status": "pending",
+          "preconditions": [],
+          "testData": {},
+          "evidence": {
+            "retrieved_chunk_ids": [
+              25,
+              5,
+              22,
+              11,
+              24
+            ],
+            "matched_sections": [
+              "users shall have an active username/password with sufficient privileges."
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "featureId": "feature_005",
+      "name": "Integration with Other Systems",
+      "description": "The system shall integrate with other systems used by JDECo to exchange information and notify responsible departments or employees.",
+      "featureType": "FUNCTIONAL",
+      "priority": "Medium",
+      "status": "pending",
+      "acceptanceCriteria": [
+        "The system successfully exchanges information with inventory and billing systems.",
+        "Notifications are sent to the appropriate departments or employees."
+      ],
+      "reasoning": "Integration is necessary for efficient operations and data consistency.",
+      "matchedSections": [
+        "the system will also be able to integrate with other systems working in JDECo to exchange the information and notify the responsible department / employee with the progress done."
+      ],
+      "confidence": 1.0,
+      "evidence": {
+        "retrieved_chunk_ids": [
+          4,
+          24,
+          11,
+          23,
+          25
+        ],
+        "matched_sections": [
+          "the system will also be able to integrate with other systems working in JDECo to exchange the information and notify the responsible department / employee with the progress done."
+        ],
+        "queries": {
+          "by_name": "Integration with Other Systems",
+          "by_name_and_matched_sections": "Integration with Other Systems the system will also be able to integrate with other systems working in JDECo to exchange the information and notify the responsible department / employee with the progress done.",
+          "by_description": "The system shall integrate with other systems used by JDECo to exchange information and notify responsible departments or employees."
+        }
+      },
+      "testCases": [
+        {
+          "testCaseId": "TC_001",
+          "title": "Verify customer login functionality with valid credentials",
+          "description": "Ensure that customers can log in using their application number and receipt number.",
+          "steps": [
+            "Navigate to the login page of the JDECo system.",
+            "Enter a valid application number and receipt number.",
+            "Click the login button.",
+            "Observe the outcome."
+          ],
+          "expectedResult": "Customer is successfully logged in and redirected to the service status page.",
+          "priority": "high",
+          "status": "pending",
+          "preconditions": [],
+          "testData": {
+            "applicationNumber": "123456",
+            "receiptNumber": "ABC123"
+          },
+          "evidence": {
+            "retrieved_chunk_ids": [
+              4,
+              24,
+              11,
+              23,
+              25
+            ],
+            "matched_sections": [
+              "the system will also be able to integrate with other systems working in JDECo to exchange the information and notify the responsible department / employee with the progress done."
+            ]
+          }
+        },
+        {
+          "testCaseId": "TC_002",
+          "title": "Verify service status visibility for logged-in customer",
+          "description": "Check that a logged-in customer can view the status of their service request.",
+          "steps": [
+            "Log in to the JDECo system with valid credentials.",
+            "Navigate to the service status section.",
+            "Observe the displayed status of the service request."
+          ],
+          "expectedResult": "The system displays the current status of the service request, including any delays.",
+          "priority": "high",
+          "status": "pending",
+          "preconditions": [
+            "Customer must be logged in."
+          ],
+          "testData": {},
+          "evidence": {
+            "retrieved_chunk_ids": [
+              4,
+              24,
+              11,
+              23,
+              25
+            ],
+            "matched_sections": [
+              "the system will also be able to integrate with other systems working in JDECo to exchange the information and notify the responsible department / employee with the progress done."
+            ]
+          }
+        },
+        {
+          "testCaseId": "TC_003",
+          "title": "Verify SMS notification for service status update",
+          "description": "Ensure that the system sends an SMS notification to the customer when there is a status update.",
+          "steps": [
+            "Simulate a status update for a service request.",
+            "Check the SMS notification sent to the customer's registered phone number.",
+            "Verify the content of the SMS notification."
+          ],
+          "expectedResult": "Customer receives an SMS notification with the updated status of their service request.",
+          "priority": "medium",
+          "status": "pending",
+          "preconditions": [
+            "Customer must have a registered phone number for notifications."
+          ],
+          "testData": {
+            "serviceRequestId": "SR123",
+            "newStatus": "In Progress"
+          },
+          "evidence": {
+            "retrieved_chunk_ids": [
+              4,
+              24,
+              11,
+              23,
+              25
+            ],
+            "matched_sections": [
+              "the system will also be able to integrate with other systems working in JDECo to exchange the information and notify the responsible department / employee with the progress done."
+            ]
+          }
+        },
+        {
+          "testCaseId": "TC_004",
+          "title": "Verify notification for site check date",
+          "description": "Check that the system sends a notification to the customer for a scheduled site check date.",
+          "steps": [
+            "Schedule a site check for a service request.",
+            "Observe the notification sent to the customer.",
+            "Verify the details of the notification."
+          ],
+          "expectedResult": "Customer receives a notification with the site check date and details.",
+          "priority": "medium",
+          "status": "pending",
+          "preconditions": [
+            "Service request must be approved and scheduled for a site check."
+          ],
+          "testData": {
+            "serviceRequestId": "SR456",
+            "siteCheckDate": "2023-10-15"
+          },
+          "evidence": {
+            "retrieved_chunk_ids": [
+              4,
+              24,
+              11,
+              23,
+              25
+            ],
+            "matched_sections": [
+              "the system will also be able to integrate with other systems working in JDECo to exchange the information and notify the responsible department / employee with the progress done."
+            ]
+          }
+        },
+        {
+          "testCaseId": "TC_005",
+          "title": "Verify system behavior when customer attempts to log in with invalid credentials",
+          "description": "Ensure that the system does not allow login with invalid application number or receipt number.",
+          "steps": [
+            "Navigate to the login page of the JDECo system.",
+            "Enter an invalid application number and receipt number.",
+            "Click the login button.",
+            "Observe the outcome."
+          ],
+          "expectedResult": "The system displays an error message indicating invalid credentials.",
+          "priority": "high",
+          "status": "pending",
+          "preconditions": [],
+          "testData": {
+            "applicationNumber": "invalid",
+            "receiptNumber": "invalid"
+          },
+          "evidence": {
+            "retrieved_chunk_ids": [
+              4,
+              24,
+              11,
+              23,
+              25
+            ],
+            "matched_sections": [
+              "the system will also be able to integrate with other systems working in JDECo to exchange the information and notify the responsible department / employee with the progress done."
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "total_chunks": 30,
+    "chunks_fully_in_context": 30,
+    "context_truncated": false,
+    "extraction_mode": "segment_then_merge",
+    "chunks_per_group": 5,
+    "segment_count": 6,
+    "feature_count": 5,
+    "test_cases_skipped": false
+  }
+}

@@ -3,6 +3,24 @@
 Folder convention:
   data/benchmarks/rag_eval/questions/retrieval_ground_truth*.json
   data/outputs/evaluation/rag_benchmark/{retrieval,generation,e2e,diagnostics}
+
+Retrieval metrics (hit@k, precision@k, recall@k, MRR) compare **which source_file**
+names appear among the top-k **chunks**. That only reflects *document selection* when
+the search competes across multiple corpora.
+
+- **Default (per-SRS index):** one FAISS index per PDF; each query searches inside that
+  PDF only. Then almost every retrieved chunk shares the same ``source_file``, so
+  file-level hit/MRR are **near-trivially optimistic** (they do **not** prove the
+  right *chunks* were retrieved). Use this mode for fast runs or when production
+  mirrors one index per document.
+
+- **``--unified-index``:** one FAISS index over **all** ``*.pdf`` under ``--srs-dir``;
+  retrieval uses ``retrieve_top_k_for_source_files`` so only chunks from
+  ``relevant_files`` are kept after a global similarity search. File-level metrics
+  are then **meaningful** for multi-document setups (same idea as notebook 07).
+
+Generation metrics (semantic similarity, gen_correct) and ``retrieved_contexts_json``
+remain valid in both modes; trust those plus manual chunk review when diagnosing RAG.
 """
 from __future__ import annotations
 
@@ -19,10 +37,18 @@ _RAG_LAB = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(_RAG_LAB / "src"))
 
 from qbrain_rag.application.chunking import chunk_text  # noqa: E402
-from qbrain_rag.application.evaluation import semantic_similarity  # noqa: E402
+from qbrain_rag.application.evaluation import (  # noqa: E402
+    SEMANTIC_SIMILARITY_DEFAULT_THRESHOLD,
+    passes_semantic_threshold,
+    semantic_similarity,
+)
 from qbrain_rag.infrastructure.document_loaders import load_document  # noqa: E402
 from qbrain_rag.infrastructure.llm import answer_with_context  # noqa: E402
-from qbrain_rag.infrastructure.vector_store import build_faiss_store, retrieve_top_k  # noqa: E402
+from qbrain_rag.infrastructure.vector_store import (  # noqa: E402
+    build_faiss_store,
+    retrieve_top_k,
+    retrieve_top_k_for_source_files,
+)
 
 
 def _ensure_dirs(base: Path) -> dict[str, Path]:
@@ -77,6 +103,22 @@ def _build_store(path: Path):
     return build_faiss_store(chunks, metas)
 
 
+def _build_unified_store(srs_dir: Path):
+    """Single FAISS index over every ``*.pdf`` in ``srs_dir`` (sorted)."""
+    pdf_paths = sorted(srs_dir.glob("*.pdf"))
+    if not pdf_paths:
+        raise FileNotFoundError(f"No PDFs under {srs_dir}")
+    all_chunks: list[str] = []
+    all_metas: list[dict] = []
+    for path in pdf_paths:
+        text = load_document(str(path))
+        chunks = chunk_text(text)
+        for i, ch in enumerate(chunks):
+            all_chunks.append(ch)
+            all_metas.append({"source_file": path.name, "chunk_id": i + 1})
+    return build_faiss_store(all_chunks, all_metas)
+
+
 def _unique_in_order(values: list[str]) -> list[str]:
     seen: set[str] = set()
     out: list[str] = []
@@ -117,14 +159,20 @@ def run_benchmark(
     threshold: float,
     answer_temperature: float,
     evaluation_mode: bool,
+    unified_index: bool,
 ) -> pd.DataFrame:
     srs_names = sorted({str(q["srs_file"]) for q in questions})
-    stores: dict[str, Any] = {}
     for name in srs_names:
-        path = srs_dir / name
-        if not path.is_file():
-            raise FileNotFoundError(f"Missing SRS file: {path}")
-        stores[name] = _build_store(path)
+        if not (srs_dir / name).is_file():
+            raise FileNotFoundError(f"Missing SRS file: {srs_dir / name}")
+
+    unified_store: Any | None = None
+    stores: dict[str, Any] = {}
+    if unified_index:
+        unified_store = _build_unified_store(srs_dir)
+    else:
+        for name in srs_names:
+            stores[name] = _build_store(srs_dir / name)
 
     rows: list[dict[str, Any]] = []
     ordered = sorted(questions, key=lambda x: (str(x["srs_file"]), str(x.get("question_id", ""))))
@@ -137,9 +185,18 @@ def run_benchmark(
         if not isinstance(relevant_list, list):
             relevant_list = [srs_file]
         relevant = {str(x) for x in relevant_list}
-        docs = retrieve_top_k(stores[srs_file], qtxt, k=k)
+        if unified_index:
+            assert unified_store is not None
+            docs = retrieve_top_k_for_source_files(
+                unified_store,
+                qtxt,
+                allowed_source_files=relevant,
+                k=k,
+            )
+        else:
+            docs = retrieve_top_k(stores[srs_file], qtxt, k=k)
         retrieved_sources = _unique_in_order([str(d.metadata.get("source_file", "")) for d in docs])
-        inter = relevant.intersection(retrieved_sources)
+        inter = relevant.intersection(set(retrieved_sources))
         rank = _first_relevant_rank(retrieved_sources, relevant)
 
         precision_at_k = len(inter) / max(1, k)
@@ -155,7 +212,7 @@ def run_benchmark(
         )
         expected = str(item["expected_answer"])
         similarity = semantic_similarity(expected, answer)
-        gen_correct = similarity >= threshold
+        gen_correct = passes_semantic_threshold(similarity, threshold=threshold)
 
         if hit_at_k == 0:
             failure_type = "retrieval_fail"
@@ -169,6 +226,7 @@ def run_benchmark(
                 "question_id": qid,
                 "category": category,
                 "srs_file": srs_file,
+                "retrieval_mode": "unified" if unified_index else "per_srs",
                 "question": qtxt,
                 "relevant_files": ";".join(sorted(relevant)),
                 "retrieved_files_topk": ";".join(retrieved_sources),
@@ -198,12 +256,21 @@ def main() -> None:
     parser.add_argument("--srs-dir", type=Path, default=_RAG_LAB / "data" / "srs")
     parser.add_argument("--max-questions-per-srs", type=int, default=10)
     parser.add_argument("--k", type=int, default=5)
-    parser.add_argument("--threshold", type=float, default=0.72)
+    parser.add_argument(
+        "--threshold",
+        type=float,
+        default=SEMANTIC_SIMILARITY_DEFAULT_THRESHOLD,
+        help=f"Similarity threshold for gen_correct (default {SEMANTIC_SIMILARITY_DEFAULT_THRESHOLD})",
+    )
     parser.add_argument(
         "--threshold-sweep",
         type=str,
         default="",
-        help="Optional comma-separated thresholds (e.g. 0.65,0.68,0.70,0.72,0.75)",
+        help=(
+            "Optional comma-separated similarity thresholds for gen_correct (e.g. "
+            "0.6,0.65,0.7,0.75). Writes threshold_sweep.csv; use with --evaluation-mode "
+            "to see how much failure is threshold vs. content."
+        ),
     )
     parser.add_argument("--answer-temperature", type=float, default=0.1)
     parser.add_argument(
@@ -216,10 +283,26 @@ def main() -> None:
         type=Path,
         default=_RAG_LAB / "data" / "outputs" / "evaluation" / "rag_benchmark",
     )
+    parser.add_argument(
+        "--unified-index",
+        action="store_true",
+        help=(
+            "Build one FAISS index over all PDFs in --srs-dir and retrieve with "
+            "metadata filtering (meaningful file-level hit@k / MRR). "
+            "Default per-SRS indexes make those metrics mostly non-informative."
+        ),
+    )
     args = parser.parse_args()
 
     dirs = _ensure_dirs(args.out_dir)
     questions = _cap_per_srs(_load_questions(args.questions_dir), max(1, args.max_questions_per_srs))
+    if not args.unified_index:
+        print(
+            "Note: retrieval_mode=per_srs — file-level hit@k / MRR / precision@k are "
+            "mostly trivial (single-document index). Use --unified-index for "
+            "document-selection metrics comparable across the corpus.",
+            file=sys.stderr,
+        )
     df = run_benchmark(
         questions,
         srs_dir=args.srs_dir,
@@ -227,11 +310,22 @@ def main() -> None:
         threshold=args.threshold,
         answer_temperature=args.answer_temperature,
         evaluation_mode=args.evaluation_mode,
+        unified_index=args.unified_index,
     )
 
-    # level 1: retrieval
     retrieval_q = df[
-        ["question_id", "category", "srs_file", "hit_at_k", "precision_at_k", "recall_at_k", "mrr", "relevant_files", "retrieved_files_topk"]
+        [
+            "question_id",
+            "category",
+            "srs_file",
+            "retrieval_mode",
+            "hit_at_k",
+            "precision_at_k",
+            "recall_at_k",
+            "mrr",
+            "relevant_files",
+            "retrieved_files_topk",
+        ]
     ].copy()
     retrieval_q.to_csv(dirs["retrieval"] / "retrieval_by_question.csv", index=False)
     retrieval_srs = (
@@ -247,7 +341,6 @@ def main() -> None:
     )
     retrieval_srs.to_csv(dirs["retrieval"] / "retrieval_summary_by_srs.csv", index=False)
 
-    # level 2: generation
     generation_q = df[
         ["question_id", "category", "srs_file", "similarity", "gen_correct", "expected_answer", "generated_answer"]
     ].copy()
@@ -265,7 +358,6 @@ def main() -> None:
     )
     generation_srs.to_csv(dirs["generation"] / "generation_summary_by_srs.csv", index=False)
 
-    # level 3: end-to-end
     e2e_q = df[
         ["question_id", "category", "srs_file", "hit_at_k", "gen_correct", "failure_type", "similarity"]
     ].copy()
@@ -321,6 +413,8 @@ def main() -> None:
         ]
     )
     overall.to_csv(dirs["base"] / "overall_summary.csv", index=False)
+    meta = {"retrieval_mode": str(df["retrieval_mode"].iloc[0]) if len(df) else "unknown"}
+    (dirs["base"] / "run_meta.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
     df.to_csv(dirs["base"] / "benchmark_full_results.csv", index=False)
 
     sweep = _parse_threshold_sweep(args.threshold_sweep)

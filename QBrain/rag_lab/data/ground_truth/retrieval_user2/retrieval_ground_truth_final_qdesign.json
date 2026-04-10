@@ -1,0 +1,362 @@
+[
+  {
+    "question_id": "ERTMS_1",
+    "question": "According to the ERTMS document, what does this document define?",
+    "srs_file": "2007 - ertms.pdf",
+    "expected_answer": "This document defines the functional requirements for ERTMS/ETCS (EUROPEAN RAIL TRAFFIC MANAGEMENT SYSTEM / EUROPEAN TRAIN CONTROL SYSTEM)."
+  },
+  {
+    "question_id": "ERTMS_2",
+    "question": "According to the ERTMS document requirements notation, what does (M) mean?",
+    "srs_file": "2007 - ertms.pdf",
+    "expected_answer": "(M) = Mandatory:The requirement shall be respected in every ETCS application."
+  },
+  {
+    "question_id": "ERTMS_3",
+    "question": "According to the ERTMS document requirements notation, what does (O) mean?",
+    "srs_file": "2007 - ertms.pdf",
+    "expected_answer": "(O) = Optional:It is not mandatory to implement this function in every ETCS application."
+  },
+  {
+    "question_id": "ERTMS_4",
+    "question": "According to the ERTMS requirements, what information shall ETCS provide the driver with?",
+    "srs_file": "2007 - ertms.pdf",
+    "expected_answer": "ETCS shall provide the driver with information to allow him to drive the train safely."
+  },
+  {
+    "question_id": "ERTMS_5",
+    "question": "According to the ERTMS requirements, which movements shall ETCS supervise?",
+    "srs_file": "2007 - ertms.pdf",
+    "expected_answer": "ETCS shall be able to supervise train and shunting movements."
+  },
+  {
+    "question_id": "ERTMS_6",
+    "question": "According to the ERTMS requirements, what is the maximum train speed for which ETCS shall be functional?",
+    "srs_file": "2007 - ertms.pdf",
+    "expected_answer": "ETCS is required to be functional to a maximum train speed of 500 km/h."
+  },
+  {
+    "question_id": "ERTMS_7",
+    "question": "According to the ETCS application levels in the ERTMS document, how is Level 1 defined?",
+    "srs_file": "2007 - ertms.pdf",
+    "expected_answer": "Basic track to train information via intermittent transmission media, e.g. balises."
+  },
+  {
+    "question_id": "ERTMS_8",
+    "question": "According to the ETCS application levels in the ERTMS document, how is Level 2 defined?",
+    "srs_file": "2007 - ertms.pdf",
+    "expected_answer": "Basic track to train and train to track information via continuous transmission media, i.e. radio. The train detection is provided by trackside."
+  },
+  {
+    "question_id": "ERTMS_9",
+    "question": "According to the ERTMS level-transition rule, what shall happen if the driver does not acknowledge after the transition?",
+    "srs_file": "2007 - ertms.pdf",
+    "expected_answer": "If the driver does not acknowledge after the transition the brake shall be applied."
+  },
+  {
+    "question_id": "ERTMS_10",
+    "question": "According to the ERTMS requirements, with which systems shall ETCS be compatible?",
+    "srs_file": "2007 - ertms.pdf",
+    "expected_answer": "ETCS shall be compatible with existing national systems listed in the CCS TSI such that it does not interfere with the national systems and is not interfered with by the national systems."
+  },
+  {
+    "question_id": "ERTMS_11",
+    "question": "According to the ERTMS transition requirements, what shall ETCS do if the driver fails to acknowledge a required transition?",
+    "srs_file": "2007 - ertms.pdf",
+    "expected_answer": "In case the transition has to be acknowledged and the driver fails to acknowledge as required, the ETCS shall initiate a brake application."
+  },
+  {
+    "question_id": "ERTMS_12",
+    "question": "According to the ERTMS DMI requirements, what shall be indicated to the driver on the DMI?",
+    "srs_file": "2007 - ertms.pdf",
+    "expected_answer": "The current operational status shall be indicated to the driver on the DMI."
+  },
+  {
+    "question_id": "KEEPASS_1",
+    "question": "According to the KeePass document, what is the stated purpose of KeePass Password Safe?",
+    "srs_file": "2008 - keepass.pdf",
+    "expected_answer": "Its purpose is to keep all of the user’s passwords, data, email accounts, usernames and URLs stored in a very secure, encrypted database, protected by a Master Password."
+  },
+  {
+    "question_id": "KEEPASS_2",
+    "question": "According to the KeePass document, what user problem does the system solve?",
+    "srs_file": "2008 - keepass.pdf",
+    "expected_answer": "The system gives resolution to memorizing passwords problem."
+  },
+  {
+    "question_id": "KEEPASS_3",
+    "question": "According to the KeePass document, how is the system size/portability described?",
+    "srs_file": "2008 - keepass.pdf",
+    "expected_answer": "The system is very small so it can be easily transferred from one computer to another."
+  },
+  {
+    "question_id": "KEEPASS_4",
+    "question": "According to the KeePass document, how is the produced database protected?",
+    "srs_file": "2008 - keepass.pdf",
+    "expected_answer": "The database produced, is protected by a Master Password only known by its inventor with no backup if lost."
+  },
+  {
+    "question_id": "KEEPASS_5",
+    "question": "According to the KeePass document, what happens if the Master Password and/or key file are lost?",
+    "srs_file": "2008 - keepass.pdf",
+    "expected_answer": "There are no duplicates, anywhere in your computer, of this Master Password and/or key file so in case of lost database cannot be opened by anyone. Not even by you and that is because there is no recovery password or back door."
+  },
+  {
+    "question_id": "KEEPASS_6",
+    "question": "According to the KeePass document, how are user data organized?",
+    "srs_file": "2008 - keepass.pdf",
+    "expected_answer": "Each user’s data are divided into groups and subgroups so that they are organized in a form that serves right the user."
+  },
+  {
+    "question_id": "KEEPASS_7",
+    "question": "According to the KeePass document, what is the Composite Master Key?",
+    "srs_file": "2008 - keepass.pdf",
+    "expected_answer": "All these together form the Composite Master Key and are all required in order to open the database."
+  },
+  {
+    "question_id": "KEEPASS_8",
+    "question": "According to the KeePass document, which database functions are listed?",
+    "srs_file": "2008 - keepass.pdf",
+    "expected_answer": "KeePass Password Safe provides the user with the following functions: Database – New, Open, Close, Save, Print, Search, Import, Export"
+  },
+  {
+    "question_id": "KEEPASS_9",
+    "question": "According to the KeePass document, how long does a copied password remain in memory?",
+    "srs_file": "2008 - keepass.pdf",
+    "expected_answer": "When a password is copied for any reason, (e.g. copy to an application, account, and website) it remains in the memory for only 10 seconds."
+  },
+  {
+    "question_id": "KEEPASS_10",
+    "question": "According to the KeePass document, which two encryption algorithms are used to protect user data?",
+    "srs_file": "2008 - keepass.pdf",
+    "expected_answer": "In order to keep the user’s data fully protected, 2 very secure algorithms are used: Advanced Encryption Standard (AES / Rijndael) 128 bits 256 bits Twofish 128 bits 256 bits."
+  },
+  {
+    "question_id": "KEEPASS_11",
+    "question": "According to the KeePass document, which hash algorithm is used for creating the 256-bit key?",
+    "srs_file": "2008 - keepass.pdf",
+    "expected_answer": "For the creation of the 256-bit key the Cipher uses, the Secure Hash Algorithm SHA-256 is used."
+  },
+  {
+    "question_id": "KEEPASS_12",
+    "question": "According to the KeePass document, what is required to unlock the workspace when it is locked?",
+    "srs_file": "2008 - keepass.pdf",
+    "expected_answer": "So to unlock it the Master Key is required again."
+  },
+  {
+    "question_id": "INV_1",
+    "question": "According to the Inventory document, what is the purpose of this document?",
+    "srs_file": "2009 - inventory 2.0.pdf",
+    "expected_answer": "The purpose of this document is to define the requirements of the Inventory Management System as proposed by the Construction Junction (CJ) staff."
+  },
+  {
+    "question_id": "INV_2",
+    "question": "According to the Inventory document, what is the scope of the Inventory Management project?",
+    "srs_file": "2009 - inventory 2.0.pdf",
+    "expected_answer": "The scope of the Inventory Management project and subsequently the requirements defined by this document is the creation of a categorized Inventory Management System that provides the functionality identified by the Construction Junction team."
+  },
+  {
+    "question_id": "INV_3",
+    "question": "According to the Inventory document, what is the Inventory Management System designed to allow staff to do?",
+    "srs_file": "2009 - inventory 2.0.pdf",
+    "expected_answer": "The Inventory Management System is an application designed to allow the Construction Junction staff to create, maintain and view the contents and value of its inventory of items in a categorized way."
+  },
+  {
+    "question_id": "INV_4",
+    "question": "According to the Inventory document, which receiving processes into inventory are facilitated?",
+    "srs_file": "2009 - inventory 2.0.pdf",
+    "expected_answer": "It also facilitates the process of receiving items into the Construction Junction inventory via the drop-off, pick-up and deconstruction donation processes so that items can be traced from donation through sale."
+  },
+  {
+    "question_id": "INV_5",
+    "question": "According to the Inventory document roles, who is an Administrator?",
+    "srs_file": "2009 - inventory 2.0.pdf",
+    "expected_answer": "Administrator: A member of the Construction Junction staff who can perform any of the Inventory Management functions."
+  },
+  {
+    "question_id": "INV_6",
+    "question": "According to the Inventory document roles, who is a Manager?",
+    "srs_file": "2009 - inventory 2.0.pdf",
+    "expected_answer": "Manager: A member of the Construction Junction staff who can perform the same Inventory Management functions as a Receiving Associate, plus change item properties."
+  },
+  {
+    "question_id": "INV_7",
+    "question": "According to the Inventory document roles, who is a Donor?",
+    "srs_file": "2009 - inventory 2.0.pdf",
+    "expected_answer": "Donor: An individual or organization who donates items to the Construction Junction inventory and receives a tax deduction for doing so."
+  },
+  {
+    "question_id": "INV_8",
+    "question": "According to the Inventory document roles, who is a Buyer?",
+    "srs_file": "2009 - inventory 2.0.pdf",
+    "expected_answer": "Buyer: A customer who purchases items from the Construction Junction inventory."
+  },
+  {
+    "question_id": "INV_9",
+    "question": "According to the Inventory document, what is the pre-condition before viewing inventory?",
+    "srs_file": "2009 - inventory 2.0.pdf",
+    "expected_answer": "User is logged into the system"
+  },
+  {
+    "question_id": "INV_10",
+    "question": "According to the Inventory document flow, what does the system display after the user accesses the main inventory screen?",
+    "srs_file": "2009 - inventory 2.0.pdf",
+    "expected_answer": "The screen displays all inventory departments"
+  },
+  {
+    "question_id": "INV_11",
+    "question": "According to the Inventory document flow, what does the system display after the user clicks a department cell?",
+    "srs_file": "2009 - inventory 2.0.pdf",
+    "expected_answer": "The screen displays all inventory categories for the selected department"
+  },
+  {
+    "question_id": "INV_12",
+    "question": "According to the Inventory document flow, what does the system display when the user clicks an item in the items list?",
+    "srs_file": "2009 - inventory 2.0.pdf",
+    "expected_answer": "The screen displays the details for the item"
+  },
+  {
+    "question_id": "GPARTED_1",
+    "question": "According to the GParted document, what is the purpose of this document?",
+    "srs_file": "2010 - gparted.pdf",
+    "expected_answer": "The purpose of this document is to describe and define the functional requirements of the Gparted application."
+  },
+  {
+    "question_id": "GPARTED_2",
+    "question": "According to the GParted document, how is GParted defined?",
+    "srs_file": "2010 - gparted.pdf",
+    "expected_answer": "Gparted is a graphical partition editor for creating, reorganizing, and deleting disk partitions."
+  },
+  {
+    "question_id": "GPARTED_3",
+    "question": "According to the GParted document, what is GParted otherwise known as?",
+    "srs_file": "2010 - gparted.pdf",
+    "expected_answer": "Otherwise known as the Gnome Partition Editor, it is a frontend to the GNU Parted partition editor, and specifically uses its library, libparted, to detect and manipulate devices and partition tables, and perform all the functions it has been designed for."
+  },
+  {
+    "question_id": "GPARTED_4",
+    "question": "According to the GParted document, what does it mean that GParted is a LiveCD application?",
+    "srs_file": "2010 - gparted.pdf",
+    "expected_answer": "It is a LiveCD application, which means it runs at system boot, resides in your computer’s RAM memory, and disappears upon reboot, after having performed the desired functions."
+  },
+  {
+    "question_id": "GPARTED_5",
+    "question": "According to the GParted document, what partition operations is GParted used for?",
+    "srs_file": "2010 - gparted.pdf",
+    "expected_answer": "GParted is one of many programs used for creating, deleting, resizing, moving, checking and copying partitions, and the file systems on them."
+  },
+  {
+    "question_id": "GPARTED_6",
+    "question": "According to the GParted document, what tasks is GParted useful for?",
+    "srs_file": "2010 - gparted.pdf",
+    "expected_answer": "This is useful for creating space for new operating systems, reorganizing disk space, copying data residing on hard disks and mirroring one partition with another (disk imaging)."
+  },
+  {
+    "question_id": "GPARTED_7",
+    "question": "According to the GParted document, what backend does GParted use?",
+    "srs_file": "2010 - gparted.pdf",
+    "expected_answer": "GParted uses GNU Parted as a backend, and aims at keeping the GUI as simple as possible, so it does not become a hindrance to the overall casual user experience."
+  },
+  {
+    "question_id": "GPARTED_8",
+    "question": "According to the GParted document, what does GParted use to detect and manipulate devices and partition tables?",
+    "srs_file": "2010 - gparted.pdf",
+    "expected_answer": "GParted uses GNU libparted to detect and manipulate devices and partition tables."
+  },
+  {
+    "question_id": "GPARTED_9",
+    "question": "According to the GParted document, what toolkit is listed for creating GUIs?",
+    "srs_file": "2010 - gparted.pdf",
+    "expected_answer": "Gtkmm >= 2.8.x (toolkit for creating GUIs)"
+  },
+  {
+    "question_id": "GPARTED_10",
+    "question": "According to the GParted document, which file systems are listed as supported?",
+    "srs_file": "2010 - gparted.pdf",
+    "expected_answer": "Supports file systems such as: ext2/ext3/ext4, FAT16/FAT32, hfs/hfs+, linux‐swap, NTFS, reiserfs/4, ufs, xfs file systems."
+  },
+  {
+    "question_id": "GPARTED_11",
+    "question": "According to the GParted document, on which operating system is GParted based?",
+    "srs_file": "2010 - gparted.pdf",
+    "expected_answer": "It is written in C++ and is based on the Debian GNU/Linux operating system."
+  },
+  {
+    "question_id": "GPARTED_12",
+    "question": "According to the GParted document, what is needed to use the Live version of GParted?",
+    "srs_file": "2010 - gparted.pdf",
+    "expected_answer": "The Live version, on which this document is based, needs a basic x86 computer, regardless of the operating system, with a CD drive and/or USB port."
+  },
+  {
+    "question_id": "JDECO_1",
+    "question": "According to the JDECo SRS document, what is the purpose of this document?",
+    "srs_file": "JDECo_SRS.docx[1].pdf",
+    "expected_answer": "The purpose of this document is to provide a detailed description and design of the requirements specifications to design, develop and implement a mobile application and web-based JDECO Services Management System “JDECo -SMS”, its features,what the software will do, technical dependencies and the constraints under which it must operate to meet JDECo stakeholders needs and satisfaction."
+  },
+  {
+    "question_id": "JDECO_2",
+    "question": "According to the JDECo SRS document, how is JDECo-SMS defined?",
+    "srs_file": "JDECo_SRS.docx[1].pdf",
+    "expected_answer": "JDECo-SMS is a mobile and web- based system, it will be used to manage and track all services requested by JDECo customers, emergency works, and company plans to expand and upgrade the electrical grid under their area of concession."
+  },
+  {
+    "question_id": "JDECO_3",
+    "question": "According to the JDECo SRS document, with what other systems can this system integrate?",
+    "srs_file": "JDECo_SRS.docx[1].pdf",
+    "expected_answer": "The system will also be able to integrate with other systems working in JDECo to exchange the information and notify the responsible department / employee with the progress done and if it is required to act or make a decision regarding the request."
+  },
+  {
+    "question_id": "JDECO_4",
+    "question": "According to the JDECo SRS document, what important feature involves customers?",
+    "srs_file": "JDECo_SRS.docx[1].pdf",
+    "expected_answer": "One of the most important feature in this system is that the customers will be involved in this process"
+  },
+  {
+    "question_id": "JDECO_5",
+    "question": "According to the JDECo SRS document, how can the customer log in to the system?",
+    "srs_file": "JDECo_SRS.docx[1].pdf",
+    "expected_answer": "the customer could login to the system using the credential as the application number, and his receipt number"
+  },
+  {
+    "question_id": "JDECO_6",
+    "question": "According to the JDECo SRS document, what can the customer view in the system?",
+    "srs_file": "JDECo_SRS.docx[1].pdf",
+    "expected_answer": "view where is the service now or stuck and the status, and the time needed to be finished"
+  },
+  {
+    "question_id": "JDECO_7",
+    "question": "According to the JDECo SRS document, how can the system notify the customer?",
+    "srs_file": "JDECo_SRS.docx[1].pdf",
+    "expected_answer": "the system could send SMS to the customer notifying with the status and if there and step needed from customer side."
+  },
+  {
+    "question_id": "JDECO_8",
+    "question": "According to the JDECo SRS document, what customer-facing outcomes are increased?",
+    "srs_file": "JDECo_SRS.docx[1].pdf",
+    "expected_answer": "This will increase the satisfaction of customers, and increase efficiency of using JDECo resources."
+  },
+  {
+    "question_id": "JDECO_9",
+    "question": "According to the JDECo SRS product perspective section, how is the product described?",
+    "srs_file": "JDECo_SRS.docx[1].pdf",
+    "expected_answer": "The system is a green field project based on a custom web interface design where all types of users can use, maintain and administer the system's components based on their privileges."
+  },
+  {
+    "question_id": "JDECO_10",
+    "question": "According to the JDECo SRS document, how is JDECo-SMS described regarding integration?",
+    "srs_file": "JDECo_SRS.docx[1].pdf",
+    "expected_answer": "The JDECo-SMS is a stand-alone but at the same time it’s integrated with inventory and billing systems mainly."
+  },
+  {
+    "question_id": "JDECO_11",
+    "question": "According to the JDECo SRS document, what is required to access the product?",
+    "srs_file": "JDECo_SRS.docx[1].pdf",
+    "expected_answer": "To access the product, users shall have an active username/password with sufficient privileges."
+  },
+  {
+    "question_id": "JDECO_12",
+    "question": "According to the JDECo SRS document, what shall JDECo enable if connection is broken before a request is confirmed or canceled?",
+    "srs_file": "JDECo_SRS.docx[1].pdf",
+    "expected_answer": "If the connection between the user and the system is broken prior to a request being either confirmed or canceled, the JDECo shall enable the user to recover an incomplete requested service."
+  }
+]

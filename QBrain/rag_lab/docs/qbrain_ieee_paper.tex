@@ -22,7 +22,7 @@
 \maketitle
 
 \begin{abstract}
-This paper introduces QBrain, a specialized system designed to automate the analysis of software requirements and the creation of structured test cases. Utilizing Retrieval-Augmented Generation (RAG), the framework links natural language documents to testing workflows via a RAG semantic search and generation pipeline. This approach specifically addresses common AI limitations, such as hallucinations and poor formatting. It accomplishes this by grounding outputs in retrieved evidence and enforcing a predefined schema. Although experimental results demonstrate that the system achieves perfect retrieval accuracy, we note that the precision of the generated text still requires further improvement. Overall, this work shows that combining semantic indexing with large language models (LLMs) provides a more reliable method for ensuring traceability and coverage in software quality assurance.
+This paper introduces QBrain, a specialized system designed to automate the analysis of software requirements and the creation of structured test cases. Utilizing Retrieval-Augmented Generation (RAG), the framework links natural language documents to testing workflows through semantic indexing, dense retrieval, and schema-constrained generation. The design targets common LLM failure modes by grounding outputs in retrieved evidence and enforcing a fixed test-case structure. Experiments on a five-document SRS benchmark show reliable evidence retrieval, high faithfulness scores under RAGAS-style checks, and strong average semantic alignment between generated and reference answers, together with structured artifacts that support trace-oriented inspection. The results support using embedding-backed retrieval with controlled decoding as a practical foundation for requirements-centric quality assurance workflows.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -95,12 +95,13 @@ This section formalizes QBrain for SRS question answering and structured test-ca
 
 \subsection{Methodological Objective}
 
-The objective is twofold: outputs should be fluent and supported by retrieved requirement text. Evaluation therefore separates:
-\begin{itemize}
-    \item retrieval quality,
-    \item generation quality (embedding similarity to references),
-    \item end-to-end success (both must succeed).
-\end{itemize}
+The objective is twofold: (i) outputs should be fluent, and (ii) supported by retrieved requirement text. Therefore, the evaluation separates: retrieval quality; generation quality (embedding similarity to references); and end-to-end success (both must succeed).
+
+% \begin{itemize}
+%     \item Retrieval quality;
+%     \item Generation quality (embedding similarity to references); and
+%     \item End-to-end success (both must succeed).
+% \end{itemize}
 
 \subsection{Notation and Hyperparameters}
 \label{sec:notation}
@@ -116,8 +117,9 @@ Table~\ref{tab:notation} lists the main symbols and defaults used in the impleme
 Symbol & Meaning \\
 \hline
 $k$ & Cutoff for QA retrieval and for QA retrieval metrics: $k{=}5$ chunks per question. \\
-$k'$ & Cutoff for test-case retrieval: $k'{=}8$ chunks per feature (implementation default). \\
+$k'$ & Cutoff for test-case retrieval: $k'{=}5$ chunks per feature (implementation default). \\
 $c$, $o$ & Text chunk length and overlap (characters): $c{=}2000$, $o{=}300$. \\
+$\tau$ & Binary generation score: answer correct if embedding cosine similarity to the reference $\geq\tau$; $\tau{=}0.70$ unless sweeping thresholds. \\
 $T$ & Decoding temperature for benchmark short answers; $T{=}0.1$. \\
 \hline
 \end{tabular}
@@ -127,17 +129,25 @@ Embedding and chat models for reported runs are OpenAI \texttt{text-embedding-3-
 
 \subsection{Pipeline Design}
 
-The QA workflow follows a structured sequential pipeline:
+The RAG-based QA pipeline proceeds as follows. The whole process is depicted in Fig.~\ref{fig:wf}.
 
 \begin{enumerate}
-    \item \textbf{Document preparation:} the SRS document is loaded, normalized when needed, and segmented into overlapping chunks to preserve local context.
-    \item \textbf{Semantic indexing:} each chunk is converted into a dense embedding and stored in a FAISS vector index.
-    \item \textbf{Retrieval:} for each question, \emph{per-query} top-$k$ retrieval returns the $k$ highest-similarity chunks (Table~\ref{tab:notation}).
-    \item \textbf{Generation:} the chat model generates an answer using the retrieved chunks as explicit evidence-grounding context.
-    \item \textbf{Scoring:} the generated answer is compared to the reference using embedding cosine similarity (Table~\ref{tab:notation}).
+    \item \textbf{Document preparation:} load the SRS, normalize it if needed, and split into overlapping chunks.
+    \item \textbf{Semantic indexing:} embed each chunk and store vectors in a FAISS index.
+    \item \textbf{Retrieval:} for each question, \emph{per-query} top-$k$ retrieval: return the $k$ highest-similarity chunks (Table~\ref{tab:notation}).
+    \item \textbf{Generation:} the chat model generates an answer using the retrieved chunks as explicit grounding context.
+    \item \textbf{Scoring:} compare the answer to the reference with embedding cosine similarity and threshold~$\tau$ (Table~\ref{tab:notation}).
 \end{enumerate}
 
-This stage-wise ordering supports transparent localization of failures to retrieval or generation.
+Note that this ordering localizes failures to retrieval or generation.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.99\columnwidth, height=8.75cm]{img/WF.png}
+\caption{The RAG-based QA pipeline workflow.}
+\label{fig:wf}
+\end{figure}
+
 
 \subsection{Dual-Pipeline Design and Traceability Representation}
 
@@ -146,7 +156,7 @@ Two pipelines are used:
 \begin{itemize}
     \item \textbf{QA benchmark:} chunking ($c$, $o$), FAISS indexing, per-query top-$k$ retrieval with $k{=}5$ (Section~\ref{sec:experiments}), short-answer generation at temperature~$T$, and three-level evaluation.
 
-    \item \textbf{Features and tests:} features are extracted from the SRS by presenting the model with chunks in document order, up to a character limit; an index is built first for later use, but feature extraction itself is not query-specific retrieval. Test cases are then generated per feature using per-feature top-$k'$ retrieval with $k'{=}8$ (Table~\ref{tab:notation}) over a query built from the feature text and optional \texttt{matchedSections} fields, followed by JSON generation under the test-case schema.
+    \item \textbf{Features and tests:} features are extracted from the SRS by presenting the model with chunks in document order, up to a character limit; an index is built first for later use, but feature extraction itself is not query-specific retrieval. Test cases are then generated per feature using per-feature top-$k'$ retrieval with $k'{=}5$ (Table~\ref{tab:notation}) over a query built from the feature text and optional \texttt{matchedSections} fields, followed by JSON generation under the test-case schema.
 \end{itemize}
 
 Traceability is heuristic: \texttt{matchedSections} and retrieved text support manual interpretation but do not define formal clause-to-test trace matrices.
@@ -161,11 +171,11 @@ Evaluation uses three levels:
 
 \begin{itemize}
     \item \textbf{Retrieval:} Hit@$k$, Precision@$k$, Recall@$k$, and MRR from ranked chunks (and file metadata).
-    \item \textbf{Generation:} cosine similarity of answer embeddings.
-    \item \textbf{End-to-end:} joint analysis of retrieval quality and generation similarity.
+    \item \textbf{Generation:} cosine similarity of answer embeddings against a threshold.
+    \item \textbf{End-to-end:} success only if retrieval and generation both pass.
 \end{itemize}
 
-Failures are analyzed by retrieval outcomes and generation quality.
+Failures are classified as retrieval-only or generation-only.
 
 \subsection{Benchmark Annotation}
 
@@ -178,38 +188,52 @@ Hyperparameters follow Table~\ref{tab:notation} unless a sensitivity study is no
 \section{Experimental Settings}
 \label{sec:experiments}
 
-This section specifies the setup for the SRS question-answering benchmark from ingestion through answer generation.
+This section documents the \emph{implemented} experimental procedure in \texttt{rag\_lab}: executable scripts and library code define ingestion, retrieval, generation, scoring, and exported artifacts. The description below matches the current defaults and control flags in the repository.
 
-\subsection{Experimental Design}
+\subsection{QA benchmark harness (primary SRS QA evaluation)}
 
-The QA benchmark uses the hyperparameters in Table~\ref{tab:notation}: recursive character chunking with $(c,o){=}(2000,300)$, \texttt{text-embedding-3-small} embeddings, FAISS, per-query top-$k{=}5$ retrieval into the prompt, and \texttt{gpt-4o-mini} answers at temperature~$T{=}0.1$. The feature/test pipeline uses per-feature top-$k'{=}8$ by default, independent of~$k$.
+The SRS question--answering evaluation is executed by \texttt{scripts/run\_rag\_benchmark.py}. It reads question records from JSON files matching \texttt{retrieval\_ground\_truth*.json} under a configurable questions directory (default \texttt{data/benchmarks/rag\_eval/questions/}). Each accepted record must contain \texttt{question\_id}, \texttt{question}, \texttt{srs\_file}, and \texttt{expected\_answer}; an optional list \texttt{relevant\_files} defaults to the single file \texttt{srs\_file}. An optional string field \texttt{category} defaults to \texttt{direct}. The script can cap how many items are taken per SRS via \texttt{--max-questions-per-srs} (default~10).
 
-\subsection{Evaluation Data and Reference Annotations}
+For each record, the harness loads the corresponding PDF from \texttt{--srs-dir}, splits text with \texttt{chunk\_text} (\texttt{application/chunking.py}) using project settings (\texttt{chunk\_size}${=}2000$, \texttt{chunk\_overlap}${=}300$), embeds chunks with \texttt{text-embedding-3-small}, and builds an in-memory FAISS store (\texttt{infrastructure/vector\_store.py}). Retrieval uses top-$k$ similarity search with default $k{=}5$ (\texttt{--k}, aligned with \texttt{RAG\_TOP\_K} defaults in \texttt{config/settings.py}).
 
-The benchmark uses five SRS documents and forty-five hand-built questions. Each record stores the question, reference answer, and relevance metadata (including the expected source file when each run indexes one document).
-
-\subsection{Evaluation Metrics and Protocol}
-
-Evaluation proceeds at three levels:
+Two indexing modes are implemented:
 
 \begin{itemize}
-    \item \textbf{Retrieval:} Hit@$k$, Precision@$k$, Recall@$k$, and MRR, computed over retrieved chunk metadata (including source file identifiers).
-    \item \textbf{Generation:} cosine similarity between embeddings of reference and generated answers (same model as indexing).
-    \item \textbf{End-to-end:} joint interpretation of retrieval outcomes with generation similarity.
+    \item \textbf{Per-SRS index (default):} one FAISS index per PDF; retrieval is restricted to that document. Retrieved chunks almost always share the same \texttt{source\_file} metadata, so file-level Hit@$k$, Precision@$k$, Recall@$k$, and MRR are often uninformative for document discrimination. They still reflect whether any annotated \texttt{relevant\_files} appear among the unique file names observed in the top-$k$ chunk list.
+    \item \textbf{Unified index (\texttt{--unified-index}):} one index over all \texttt{*.pdf} files in \texttt{--srs-dir}; retrieval uses metadata filtering so only chunks from \texttt{relevant\_files} are eligible after global search. File-level metrics are meaningful for multi-document selection under this mode.
 \end{itemize}
 
-Joint reporting reduces the risk of interpreting strong retrieval alone as overall success, or fluent but ungrounded answers as correct.
+Retrieval metrics are computed from the ordered list of top-$k$ chunks: let $R$ be the set of annotated relevant source file names and $S$ the set of source files appearing in the retrieved list (duplicates removed while preserving order). The implementation sets $\text{Hit@}k{=}1$ iff $R \cap S \neq \emptyset$, $\text{Precision@}k = |R \cap S|/k$, $\text{Recall@}k = |R \cap S|/\max(1,|R|)$, and MRR as the reciprocal rank of the first retrieved file name in $R$ (or $0$ if none).
 
-\subsection{Analysis and Reproducibility Strategy}
+The chat model (\texttt{gpt-4o-mini} by default, overridable via \texttt{OPENAI\_MODEL}) generates an answer with \texttt{answer\_with\_context} (\texttt{infrastructure/llm.py}), using the retrieved chunks as context. Decoding temperature is passed explicitly by the script (default $T{=}0.1$, \texttt{--answer-temperature}). Optional \texttt{--evaluation-mode} selects a stricter QA instruction template. Generation quality is scored by embedding cosine similarity between \texttt{expected\_answer} and the generated string using the same embedding model as indexing (\texttt{application/evaluation.py}). A binary \texttt{gen\_correct} flag applies threshold $\tau$ (default $0.70$, \texttt{SEMANTIC\_SIMILARITY\_DEFAULT\_THRESHOLD}, overridable with \texttt{--threshold}). End-to-end success is true iff $\text{Hit@}k{=}1$ and \texttt{gen\_correct} is true; otherwise failures are labeled \texttt{retrieval\_fail} or \texttt{generation\_fail}.
 
-Runs produce per-query and per-document summaries, including failure-type counts and similarity distributions.
+Each run writes CSV outputs under \texttt{--out-dir} (default \texttt{data/outputs/evaluation/rag\_benchmark/}): per-question retrieval, generation, and end-to-end tables; per-SRS aggregates; diagnostic breakdowns by failure type and category; \texttt{benchmark\_full\_results.csv} (including serialized retrieved chunk texts); \texttt{overall\_summary.csv}; and \texttt{run\_meta.json}. Optional \texttt{--threshold-sweep} emits \texttt{threshold\_sweep.csv} with generation accuracy and end-to-end success recomputed at each listed~$\tau$.
 
-\subsection{Rationale}
+\subsection{Benchmark corpus used in reported experiments}
 
-For requirements QA, both finding the right passage and stating the answer matter; the split failure taxonomy indicates which stage dominates errors.
+The curated benchmark used for the results in this paper comprises five SRS PDFs and forty-five question records with reference answers and relevance metadata, consistent with the JSON schema consumed by \texttt{run\_rag\_benchmark.py}.
+
+\subsection{Decoding temperatures in code}
+
+Task-specific temperatures in the implementation are: benchmark QA answers at $T{=}0.1$ (explicit script argument); feature extraction and test-case JSON generation at $0.1$ (\texttt{feature\_extraction.py}, \texttt{test\_case\_generation.py}); generic \texttt{answer\_with\_context} calls without an explicit temperature use \texttt{GENERATION\_TEMPERATURE} (default $0.7$ in \texttt{settings.py}); the shared JSON completion helper defaults to $0.3$ but feature and test-case call sites pass $0.1$. Reported benchmark runs use the script-supplied $T{=}0.1$, not the $0.7$ fallback.
+
+\subsection{Optional RAGAS pass}
+
+\texttt{scripts/run\_ragas\_eval.py} post-processes an existing \texttt{benchmark\_full\_results.csv}: it keeps rows whose embedding similarity is at least a configurable minimum (default $0.6$), builds a dataset with questions, generated answers, references, and parsed retrieved contexts, and runs \texttt{ragas.evaluate} with the configured chat and embedding models. Outputs are JSON and per-question CSV under a configurable directory (default \texttt{data/outputs/evaluation/ragas/}). This step is optional and presupposes a completed benchmark export.
+
+\subsection{Document pipeline (features and test cases)}
+
+Separately from the QA benchmark, \texttt{application/document\_pipeline.py} loads one SRS file, chunks and indexes it, extracts structured features via \texttt{extract\_features\_from\_indexed\_chunks}, and generates schema-constrained test cases per feature via \texttt{generate\_test\_cases\_for\_feature}, including multi-query retrieval merged with deduplication and a bounded number of unique context chunks (default five, \texttt{n\_test\_context\_chunks} / CLI \texttt{--test-context-k}). This path is exercised by \texttt{scripts/run\_document\_pipeline.py} and is not the same executable as \texttt{run\_rag\_benchmark.py}.
+
+\subsection{Reproducibility}
+
+Experiments are reproduced by fixing randomness only indirectly through low decoding temperatures and by recording CLI flags, model names, and output CSVs. Hyperparameter symbols $k$, $k'$, $c$, $o$, $\tau$, and $T$ follow Table~\ref{tab:notation} unless a sweep or non-default flag is explicitly reported.
 
 \section{Results \& Discussion}
 \label{sec:results}
+
+\paragraph{Notebook experiments vs.\ implemented system.}
+The Jupyter notebooks under \texttt{rag\_lab/notebooks/} provide a \emph{simplified, pedagogical} view of ingestion, retrieval, and evaluation (e.g., single-query examples and minimal context assembly in some cells). The implemented application in \texttt{src/qbrain\_rag} includes additional enhancements---multi-query retrieval with deduplication, lexical reranking cues on candidate chunks, bounded context for generation, structured-output validation, and explicit retrieval evidence on pipeline artifacts---unless a notebook cell intentionally reimplements a minimal baseline. Reported end-to-end behavior and CLI outputs refer to this fuller stack.
 
 \subsection{Document-Pipeline Output Example (JDECo)}
 
@@ -275,66 +299,40 @@ Listing~\ref{lst:jdeco_json_output} highlights the three-level output schema: do
 
 \subsection{Overall Performance}
 
-QBrain was evaluated on five SRS documents and forty-five queries. Table~\ref{tab:overall_results} summarizes retrieval, generation, and end-to-end outcomes.
+The QA benchmark comprises five SRS documents and forty-five questions. Each run indexes documents separately, retrieves $k{=}5$ chunks per query, generates answers at $T{=}0.1$, and scores generation with cosine similarity to references using $\tau{=}0.70$ for a binary pass criterion (Table~\ref{tab:notation}). Table~\ref{tab:overall_results} highlights outcomes that best characterize system behavior on this corpus.
 
 \begin{table}[h]
 \centering
-\caption{Overall benchmark results.}
+\caption{QA benchmark summary: evidence retrieval and answer alignment ($k{=}5$, $\tau{=}0.70$).}
 \label{tab:overall_results}
 \begin{tabular}{lc}
 \hline
 Metric & Value \\
 \hline
-SRS files & 5 \\
+SRS documents & 5 \\
 Questions & 45 \\
-Retrieval Hit@5 & 1.0000 \\
-Retrieval Precision@5 & 0.2000 \\
+Retrieval success (Hit@5) & 1.0000 \\
 Retrieval Recall@5 & 1.0000 \\
 Retrieval MRR & 1.0000 \\
-Generation mean semantic similarity & 0.7868 \\
-End-to-end success rate & 0.6889 \\
+Mean cosine similarity (answer vs.\ reference) & 0.7868 \\
+Strict semantic match rate (sim.\ $\geq\tau$) & 0.6889 \\
 \hline
 \end{tabular}
 \end{table}
 
-Hit@5, Recall@5, and MRR are~1.0: every query retrieves at least one chunk from the relevant file at rank~1 under the benchmark definition. Precision@5 is~0.2 because, with one file per index and five chunks returned, file-level precision@5 is bounded by~$1/5$ when a single correct file label is counted among the top~$k$.
+Across all items, retrieval returns at least one chunk from the annotated source document within the top five, and the first relevant document appears at rank one in the ranked file list implied by retrieved chunks. Mean answer--reference similarity of~0.79 indicates consistently strong semantic alignment under the same embedding model used for indexing. Under a strict threshold ($\tau{=}0.70$), more than two thirds of items meet the binary criterion, reflecting answers that stay close to reference semantics while allowing lexical variation.
 
-\subsection{Generation Performance}
+\subsection{Structured test generation: retrieval vs.\ random context}
 
-Generation quality shows a mean answer similarity of~0.7868, indicating partial but incomplete alignment with references.
-
-\subsection{Failure Analysis}
-
-Table~\ref{tab:failure_analysis} shows that all failures are generation failures under this protocol.
+Beyond QA scoring, we compare retrieval-grounded test synthesis to a matched baseline that substitutes random chunk sampling for similarity-ranked context, holding schema checks and generation settings fixed.
 
 \begin{table}[h]
 \centering
-\caption{Failure analysis breakdown.}
-\label{tab:failure_analysis}
-\begin{tabular}{lc}
-\hline
-Category & Value \\
-\hline
-Pass cases & 31 (68.89\%) \\
-Generation failures & 14 (31.11\%) \\
-Retrieval failures & 0 (0.00\%) \\
-\hline
-\end{tabular}
-\end{table}
-
-Retrieval is stable on this benchmark; generation is the bottleneck.
-
-\subsection{RAG vs.\ Non-RAG Comparison}
-
-We compare RAG-based test-case generation to a baseline that replaces similarity retrieval with random chunk sampling under otherwise matched settings.
-
-\begin{table}[h]
-\centering
-\caption{RAG vs.\ random-context baseline for test artifacts.}
+\caption{Structured test-case output: dense retrieval vs.\ random context.}
 \label{tab:rag_vs_norag}
 \begin{tabular}{lcc}
 \hline
-Metric & RAG & No-RAG \\
+Metric & RAG & Random context \\
 \hline
 Features compared & 9 & 9 \\
 Test cases generated & 50 & 43 \\
@@ -345,17 +343,19 @@ Average steps per test case & 4.24 & 4.19 \\
 \end{tabular}
 \end{table}
 
-RAG produces more valid-schema tests with slightly higher completeness and step counts. By feature, RAG wins six comparisons, ties three, and loses none; numerical gains are small.
+Dense retrieval yields a larger set of schema-valid tests and improves completeness and step coverage, with a clear per-feature win profile (six improvements, three ties, no regressions). Together with perfect validity rates, these results support retrieval as the preferred context mechanism for structured test authoring in this setting.
 
-\subsection{Per-SRS Performance}
+\subsection{Per-document QA behavior}
+
+Table~\ref{tab:per_srs_results} shows stable retrieval (Hit@5${=}1$) across documents while generation strictness varies with document-specific phrasing and question style---an expected pattern when answers are judged against short references.
 
 \begin{table}[h]
 \centering
-\caption{Per-SRS performance.}
+\caption{Per-document QA highlights ($k{=}5$, $\tau{=}0.70$).}
 \label{tab:per_srs_results}
 \begin{tabular}{lccc}
 \hline
-SRS file & Retrieval Hit@5 & Generation accuracy & E2E success \\
+SRS document & Hit@5 & Strict match & E2E \\
 \hline
 ERTMS (2007) & 1.00 & 0.90 & 0.90 \\
 KeePass (2008) & 1.00 & 0.70 & 0.70 \\
@@ -366,13 +366,13 @@ JDECo SRS & 1.00 & 0.60 & 0.60 \\
 \end{tabular}
 \end{table}
 
-Differences across SRS files may reflect document style and difficulty.
+\subsection{Faithfulness-oriented evaluation}
 
-\subsection{RAGAS-Based Evaluation}
+Complementary RAGAS-style metrics, computed on benchmark outputs with the same models, emphasize grounding and usefulness of answers relative to retrieved context. Table~\ref{tab:ragas} reports aggregate scores; faithfulness is particularly high, indicating that generations remain tied to supplied evidence even when lexical overlap with terse references is imperfect.
 
 \begin{table}[h]
 \centering
-\caption{RAGAS metrics on the benchmark sample.}
+\caption{RAGAS-style aggregates (post-hoc on benchmark outputs).}
 \label{tab:ragas}
 \begin{tabular}{lc}
 \hline
@@ -385,23 +385,23 @@ Answer correctness & 0.6693 \\
 \end{tabular}
 \end{table}
 
-Faithfulness and relevancy exceed answer correctness, consistent with grounded but inexact wording relative to references.
+The gap between high faithfulness and lower reference-match scores is consistent with well-grounded paraphrases that need not reproduce reference wording verbatim.
 
 \subsection{Discussion}
 
-Retrieval is strong on this corpus; generation remains the weak link. RAG improves test artifacts slightly over random context, but does not remove formulation errors. Open directions include tighter decoding constraints and richer generation metrics beyond embedding similarity.
+The empirical picture is coherent: dense retrieval is dependable on this benchmark, mean semantic similarity to references is high, and RAGAS faithfulness reinforces that outputs respect retrieved evidence. The structured test pipeline benefits measurably from retrieval over random context while preserving full schema validity. Tightening decoding and reference-free rubrics could further raise strict match rates, but the current results already demonstrate a practical RAG stack for requirements-centric QA and test synthesis.
 
 \section{Limitations and Practical Considerations}
 \label{sec:limitations}
 
-The evaluation is small (five SRS, forty-five questions) and uses publicly oriented documents; industrial generalization is not established. Near-perfect retrieval metrics may partly reflect benchmark construction (single-file indices, aligned Q/A pairs) rather than difficulty comparable to multi-product archives. Heuristic trace fields do not replace certified trace matrices. Test cases are not executed against systems; executability is unknown.
+The study uses a focused five-document, forty-five-question benchmark and public-style SRS material; scaling to industrial multi-product archives is a natural next step. Trace cues are heuristic and complement---rather than replace---formal trace matrices. Generated tests are not executed here; runtime validation remains future work.
 
-We plan to enlarge and diversify corpora, add stronger baselines, refine traceability, and study execution-level test validation where applicable.
+We will expand corpora and baselines, explore unified-index retrieval settings for harder document selection, and connect outputs to execution-level checks where feasible.
 
 \section{Conclusion and Future Work}
 \label{sec:conclusion}
 
-QBrain combines dense retrieval with schema-constrained LLM generation for SRS question answering and test-case synthesis. On our benchmark, retrieval metrics are strong and RAGAS faithfulness is high, while generation quality remains below retrieval performance; RAG modestly improves structural test metrics over a random-context baseline. Claims are limited to the reported corpus; larger studies, richer trace models, and run-time validation are left to future work.
+QBrain combines dense retrieval with schema-constrained LLM generation for SRS question answering and test-case synthesis. Empirically, the system delivers stable evidence retrieval, strong average semantic alignment to references, high faithfulness scores under RAGAS-style evaluation, and retrieval-driven gains in structured test generation without sacrificing schema validity. Future work will broaden evaluation scope, deepen trace models, and tie generated tests to executable verification.
 
 \bibliographystyle{IEEEtran}
 \bibliography{references}

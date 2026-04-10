@@ -50,12 +50,12 @@ class RAGService:
         self,
         path: str | Path,
         *,
-        n_test_context_chunks: int = 8,
+        n_test_context_chunks: int = 5,
         max_features: int | None = None,
         skip_test_cases: bool = False,
         verbose: bool = True,
     ) -> dict:
-        """Index ``path``, extract features (full-chunk context), then test cases per feature (top-k RAG)."""
+        """Index ``path``, extract features (segment merge when long), then test cases per feature (multi-query RAG)."""
         return run_document_pipeline(
             path,
             n_test_context_chunks=n_test_context_chunks,

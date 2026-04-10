@@ -26,6 +26,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["jupyter>=1.0.0", "notebook>=7.0.0"]
+ragas = ["ragas>=0.4.0", "datasets>=2.14.0"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -3,7 +3,34 @@
 <html lang="en">
 <head><meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>06_evaluation_metrics.executed</title><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
+<title>10_rag_ragas_evaluation</title><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script><script>
+(function() {
+  function addWidgetsRenderer() {
+    var mimeElement = document.querySelector('script[type="application/vnd.jupyter.widget-view+json"]');
+    var scriptElement = document.createElement('script');
+    
+    var widgetRendererSrc = 'https://unpkg.com/@jupyter-widgets/html-manager@*/dist/embed-amd.js';
+    
+    var widgetState;
+
+    // Fallback for older version:
+    try {
+      widgetState = mimeElement && JSON.parse(mimeElement.innerHTML);
+
+      if (widgetState && (widgetState.version_major < 2 || !widgetState.version_major)) {
+        
+        var widgetRendererSrc = 'https://unpkg.com/@jupyter-js-widgets@*/dist/embed.js';
+        
+      }
+    } catch(e) {}
+
+    scriptElement.src = widgetRendererSrc;
+    document.body.appendChild(scriptElement);
+  }
+
+  document.addEventListener('DOMContentLoaded', addWidgetsRenderer);
+}());
+</script>
 <style type="text/css">
     pre { line-height: 125%; }
 td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
@@ -7796,47 +7823,27 @@ a.anchor-link {
 <!-- End of mermaid configuration --></head>
 <body class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
 <main>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=37d56450">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=a1b2c3d4">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h1 id="Evaluation:-ground-truth-%E2%86%92-metrics-%E2%86%92-CSV">Evaluation: ground truth → metrics → CSV<a class="anchor-link" href="#Evaluation:-ground-truth-%E2%86%92-metrics-%E2%86%92-CSV">¶</a></h1><h2 id="Where-does-the-data-live?">Where does the data live?<a class="anchor-link" href="#Where-does-the-data-live?">¶</a></h2><ul>
-<li><strong>SRS document:</strong> Expect a PDF such as <code>JDECo_SRS.docx[1].pdf</code> under <strong><code>data/srs/</code></strong> (or next to the workspace root per <code>resolve_default_srs_path</code>). That file is the <strong>source of truth</strong> whose text is chunked and indexed in FAISS.</li>
-<li><strong>Questions and reference answers:</strong> Written <strong>manually</strong> in <strong><code>data/ground_truth/retrieval_ground_truth.json</code></strong>. Each item has a question, a short reference answer, and the linked filename (<code>srs_file</code> must match the <strong>basename</strong> used in the index, e.g. <code>JDECo_SRS.docx[1].pdf</code>).</li>
+<h1 id="RAG-%E2%80%94-RAGAS-evaluation-on-benchmark-CSV">RAG — RAGAS evaluation on benchmark CSV<a class="anchor-link" href="#RAG-%E2%80%94-RAGAS-evaluation-on-benchmark-CSV">¶</a></h1><p><strong>Goal:</strong> Run <a href="https://docs.ragas.io/">RAGAS</a> default metrics on rows produced by <code>scripts/run_rag_benchmark.py</code>:</p>
+<ul>
+<li><strong>faithfulness</strong> — claims in the answer supported by retrieved contexts</li>
+<li><strong>answer_relevancy</strong> — answer related to the question</li>
+<li><strong>context_precision</strong> — precision of retrieved contexts w.r.t. the reference</li>
+<li><strong>context_recall</strong> — how much of the reference is covered by contexts</li>
 </ul>
-<h2 id="What-this-notebook-does">What this notebook does<a class="anchor-link" href="#What-this-notebook-does">¶</a></h2><ol>
-<li>Load questions from JSON.</li>
-<li>Build a <strong>FAISS vector index</strong> per SRS file under <code>data/srs/</code> (same chunking settings as the rest of the project).</li>
-<li>For each question: <strong>retrieve top-K chunks</strong>, then <strong>generate an answer</strong> with the LLM from those chunks only (RAG).</li>
-<li>Compare the model answer to the <strong>reference answer</strong> using <strong>cosine similarity</strong> between <strong>text embeddings</strong> (same embedding model as indexing).</li>
-<li>Compute <strong>Hit@K</strong>, the <strong>fraction above a similarity threshold</strong>, and <strong>average similarity</strong>.</li>
-<li>Save CSVs and optionally plot a <strong>histogram</strong> of similarity scores.</li>
-</ol>
-<h2 id="Why-do-the-numbers-look-like-that?">Why do the numbers look like that?<a class="anchor-link" href="#Why-do-the-numbers-look-like-that?">¶</a></h2><ul>
-<li><strong>Semantic similarity</strong> is not a claim-by-claim factual check; a <strong>short</strong> reference vs a <strong>long</strong> generated answer can score lower even when the meaning is right.</li>
-<li><strong><code>GEN_THRESHOLD</code></strong> (e.g. 0.72) defines when an answer counts as “correct” in <code>gen_correct</code>.</li>
-<li>With <strong>only one PDF</strong> in the index, <strong>Hit@K</strong> often stays high because every chunk comes from the same file.</li>
-</ul>
-<hr/>
-<h2 id="Cell-guide">Cell guide<a class="anchor-link" href="#Cell-guide">¶</a></h2><p>Each <strong>markdown cell below</strong> immediately precedes the <strong>code cell</strong> it describes.</p>
+<p><strong>Prerequisite:</strong> <code>benchmark_full_results.csv</code> must exist. Run from <code>rag_lab</code>:
+<code>python scripts/run_rag_benchmark.py --evaluation-mode</code><br/>
+For <strong>meaningful file-level retrieval</strong> in the CSV (and fairer contexts vs. a single-doc index), prefer <strong><code>--unified-index</code></strong> (same idea as notebook 07).</p>
+<p><strong>Requirements:</strong> <code>OPENAI_API_KEY</code> in <code>rag_lab/.env</code>; install deps (cell below). Uses <strong>LangChain</strong> <code>OpenAIEmbeddings</code> for RAGAS compatibility with ragas 0.4.x.</p>
 </div>
 </div>
 </div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=3b3be7e7">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="Next-code-cell-%E2%80%94-install-dependencies">Next code cell — install dependencies<a class="anchor-link" href="#Next-code-cell-%E2%80%94-install-dependencies">¶</a></h3><p><strong>Why:</strong> Ensure LangChain, FAISS, PyMuPDF, OpenAI, pandas, and matplotlib are available in the Jupyter environment.
-<strong>How:</strong> <code>%pip install</code> installs or upgrades packages for the current kernel.</p>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=79329d06">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=e5f6a7b8">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7844,7 +7851,126 @@ a.anchor-link {
 <div class="jp-InputPrompt jp-InputArea-prompt">In [1]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">pip</span> install -q langchain-text-splitters langchain-core langchain-community langchain-openai faiss-cpu pymupdf openai python-dotenv pandas matplotlib
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Install once if needed:</span>
+<span class="c1"># %pip install -q "ragas&gt;=0.4.0" "datasets&gt;=2.14.0"</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=c9d0e1f2">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h2 id="1)-Paths,-load-CSV,-build-HuggingFace-Dataset">1) Paths, load CSV, build HuggingFace <code>Dataset</code><a class="anchor-link" href="#1)-Paths,-load-CSV,-build-HuggingFace-Dataset">¶</a></h2><p>RAGAS v2-style columns: <code>user_input</code>, <code>response</code>, <code>retrieved_contexts</code> (list of strings per row), <code>reference</code> (ground truth).</p>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=a3b4c5d6">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [1]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">openai</span><span class="w"> </span><span class="kn">import</span> <span class="n">OpenAI</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_openai</span><span class="w"> </span><span class="kn">import</span> <span class="n">OpenAIEmbeddings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ragas</span><span class="w"> </span><span class="kn">import</span> <span class="n">evaluate</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ragas.llms</span><span class="w"> </span><span class="kn">import</span> <span class="n">llm_factory</span>
+
+<span class="n">ROOT</span> <span class="o">=</span> <span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+<span class="k">if</span> <span class="n">ROOT</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">"notebooks"</span><span class="p">:</span>
+    <span class="n">ROOT</span> <span class="o">=</span> <span class="n">ROOT</span><span class="o">.</span><span class="n">parent</span>
+
+<span class="n">_SRC</span> <span class="o">=</span> <span class="n">ROOT</span> <span class="o">/</span> <span class="s2">"src"</span>
+<span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">_SRC</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="p">:</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">_SRC</span><span class="p">))</span>
+
+<span class="n">load_dotenv</span><span class="p">(</span><span class="n">ROOT</span> <span class="o">/</span> <span class="s2">".env"</span><span class="p">)</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"OPENAI_API_KEY"</span><span class="p">):</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Set OPENAI_API_KEY in rag_lab/.env"</span><span class="p">)</span>
+
+<span class="c1"># Prefer the latest benchmark outputs if available.</span>
+<span class="n">candidate_csvs</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">ROOT</span> <span class="o">/</span> <span class="s2">"data"</span> <span class="o">/</span> <span class="s2">"outputs"</span> <span class="o">/</span> <span class="s2">"evaluation"</span> <span class="o">/</span> <span class="s2">"rag_benchmark"</span> <span class="o">/</span> <span class="s2">"benchmark_full_results.csv"</span><span class="p">,</span>
+    <span class="n">ROOT</span> <span class="o">/</span> <span class="s2">"data"</span> <span class="o">/</span> <span class="s2">"outputs"</span> <span class="o">/</span> <span class="s2">"evaluation"</span> <span class="o">/</span> <span class="s2">"rag_benchmark_final_qdesign"</span> <span class="o">/</span> <span class="s2">"benchmark_full_results.csv"</span><span class="p">,</span>
+<span class="p">]</span>
+<span class="n">BENCHMARK_CSV</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">candidate_csvs</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">is_file</span><span class="p">()),</span> <span class="kc">None</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">BENCHMARK_CSV</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
+        <span class="s2">"Missing benchmark_full_results.csv in rag_benchmark or rag_benchmark_final_qdesign."</span>
+    <span class="p">)</span>
+
+<span class="n">OUT_DIR</span> <span class="o">=</span> <span class="n">ROOT</span> <span class="o">/</span> <span class="s2">"data"</span> <span class="o">/</span> <span class="s2">"outputs"</span> <span class="o">/</span> <span class="s2">"evaluation"</span> <span class="o">/</span> <span class="s2">"ragas"</span>
+
+<span class="c1"># Limit rows for quick run in notebook execution.</span>
+<span class="c1"># Set to None to evaluate all rows.</span>
+<span class="n">MAX_ROWS</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="mi">20</span>
+
+<span class="n">CHAT_MODEL</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"OPENAI_MODEL"</span><span class="p">,</span> <span class="s2">"gpt-4o-mini"</span><span class="p">)</span>
+<span class="n">EMBEDDING_MODEL</span> <span class="o">=</span> <span class="s2">"text-embedding-3-small"</span>
+
+<span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">BENCHMARK_CSV</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">MAX_ROWS</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">MAX_ROWS</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_contexts</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span> <span class="ow">or</span> <span class="n">raw</span> <span class="o">==</span> <span class="s2">""</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[]</span>
+    <span class="k">return</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">data</span> <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
+
+
+<span class="n">payload</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"question_id"</span><span class="p">:</span> <span class="p">[],</span>
+    <span class="s2">"user_input"</span><span class="p">:</span> <span class="p">[],</span>
+    <span class="s2">"response"</span><span class="p">:</span> <span class="p">[],</span>
+    <span class="s2">"retrieved_contexts"</span><span class="p">:</span> <span class="p">[],</span>
+    <span class="s2">"reference"</span><span class="p">:</span> <span class="p">[],</span>
+<span class="p">}</span>
+<span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+    <span class="n">question</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"question"</span><span class="p">,</span> <span class="s2">""</span><span class="p">))</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"generated_answer"</span><span class="p">,</span> <span class="s2">""</span><span class="p">))</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="n">reference</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"expected_answer"</span><span class="p">,</span> <span class="s2">""</span><span class="p">))</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="n">contexts</span> <span class="o">=</span> <span class="n">parse_contexts</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"retrieved_contexts_json"</span><span class="p">,</span> <span class="s2">""</span><span class="p">))</span>
+
+    <span class="c1"># Keep only evaluable rows.</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">question</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">response</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">reference</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">contexts</span><span class="p">:</span>
+        <span class="k">continue</span>
+
+    <span class="n">payload</span><span class="p">[</span><span class="s2">"question_id"</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"question_id"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)))</span>
+    <span class="n">payload</span><span class="p">[</span><span class="s2">"user_input"</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">question</span><span class="p">)</span>
+    <span class="n">payload</span><span class="p">[</span><span class="s2">"response"</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+    <span class="n">payload</span><span class="p">[</span><span class="s2">"retrieved_contexts"</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">contexts</span><span class="p">)</span>
+    <span class="n">payload</span><span class="p">[</span><span class="s2">"reference"</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">reference</span><span class="p">)</span>
+
+<span class="n">meta_ids</span> <span class="o">=</span> <span class="n">payload</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"question_id"</span><span class="p">)</span>
+<span class="n">hf_ds</span> <span class="o">=</span> <span class="n">Dataset</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"ROOT:"</span><span class="p">,</span> <span class="n">ROOT</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Benchmark CSV:"</span><span class="p">,</span> <span class="n">BENCHMARK_CSV</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Rows loaded:"</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Rows evaluable by RAGAS:"</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">hf_ds</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Chat model:"</span><span class="p">,</span> <span class="n">CHAT_MODEL</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -7857,77 +7983,28 @@ a.anchor-link {
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Note: you may need to restart the kernel to use updated packages.
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
-<pre>
-[notice] A new release of pip is available: 25.1.1 -&gt; 26.0.1
-[notice] To update, run: python.exe -m pip install --upgrade pip
+<pre>ROOT: D:\Qbrainpython\QBrain\rag_lab
+Benchmark CSV: D:\Qbrainpython\QBrain\rag_lab\data\outputs\evaluation\rag_benchmark\benchmark_full_results.csv
+Rows loaded: 20
+Rows evaluable by RAGAS: 20
+Chat model: gpt-4o-mini
 </pre>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=7a9d1c48">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=b7c8d9e0">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="Next-code-cell-%E2%80%94-imports-and-package-path">Next code cell — imports and package path<a class="anchor-link" href="#Next-code-cell-%E2%80%94-imports-and-package-path">¶</a></h3><p><strong>Data:</strong> Nothing loaded yet; this only sets <code>sys.path</code> to <code>rag_lab/src</code> so <code>qbrain_rag</code> imports work.
-<strong>Why:</strong> The notebook runs from <code>notebooks/</code>, so the path is added manually unless you installed with <code>pip install -e .</code>.</p>
+<h2 id="2)-Run-evaluate-(default-metrics)">2) Run <code>evaluate</code> (default metrics)<a class="anchor-link" href="#2)-Run-evaluate-(default-metrics)">¶</a></h2>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=ac7f616e">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [1]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-
-<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
-
-<span class="c1"># Run this notebook from the notebooks/ folder (parent = rag_lab).</span>
-<span class="n">RAG_LAB</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">".."</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
-<span class="n">SRC</span> <span class="o">=</span> <span class="n">RAG_LAB</span> <span class="o">/</span> <span class="s2">"src"</span>
-<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">SRC</span><span class="p">))</span>
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">qbrain_rag.application.chunking</span><span class="w"> </span><span class="kn">import</span> <span class="n">chunk_text</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">qbrain_rag.application.evaluation</span><span class="w"> </span><span class="kn">import</span> <span class="n">semantic_similarity</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">qbrain_rag.infrastructure.vector_store</span><span class="w"> </span><span class="kn">import</span> <span class="n">retrieve_top_k</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">qbrain_rag.config.notebook_defaults</span><span class="w"> </span><span class="kn">import</span> <span class="n">resolve_default_srs_path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">qbrain_rag.infrastructure.document_loaders</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_document</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">qbrain_rag.infrastructure.llm</span><span class="w"> </span><span class="kn">import</span> <span class="n">answer_with_context</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">qbrain_rag.infrastructure.vector_store</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_faiss_store</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=addbd319">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="Next-code-cell-%E2%80%94-load-ground-truth-and-resolve-SRS-path">Next code cell — load ground truth and resolve SRS path<a class="anchor-link" href="#Next-code-cell-%E2%80%94-load-ground-truth-and-resolve-SRS-path">¶</a></h3><p><strong>Data:</strong> <strong><code>retrieval_ground_truth.json</code></strong> (questions and <strong>manually written</strong> reference answers) and the primary PDF path from <code>data/srs/</code> (or the fallback search in <code>resolve_default_srs_path</code>).
-<strong>Output:</strong> Variable <code>ground_truth</code> (a list), plus printing the SRS path and question ids.</p>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=24c7c7f1">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=6d14434f">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7935,15 +8012,34 @@ a.anchor-link {
 <div class="jp-InputPrompt jp-InputArea-prompt">In [2]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">SRS_DIR</span> <span class="o">=</span> <span class="n">RAG_LAB</span> <span class="o">/</span> <span class="s2">"data"</span> <span class="o">/</span> <span class="s2">"srs"</span>
-<span class="n">GT_PATH</span> <span class="o">=</span> <span class="n">RAG_LAB</span> <span class="o">/</span> <span class="s2">"data"</span> <span class="o">/</span> <span class="s2">"ground_truth"</span> <span class="o">/</span> <span class="s2">"retrieval"</span> <span class="o">/</span> <span class="s2">"retrieval_ground_truth.json"</span>
-<span class="n">PRIMARY_SRS</span> <span class="o">=</span> <span class="n">resolve_default_srs_path</span><span class="p">(</span><span class="n">RAG_LAB</span><span class="p">)</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Run RAGAS with default metrics (faithfulness, answer_relevancy, context_precision, context_recall)</span>
+<span class="n">openai_client</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">(</span><span class="n">api_key</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"OPENAI_API_KEY"</span><span class="p">])</span>
+<span class="n">ragas_llm</span> <span class="o">=</span> <span class="n">llm_factory</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">CHAT_MODEL</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="n">openai_client</span><span class="p">)</span>
+<span class="n">ragas_embeddings</span> <span class="o">=</span> <span class="n">OpenAIEmbeddings</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">EMBEDDING_MODEL</span><span class="p">)</span>
 
-<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">GT_PATH</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8-sig"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-    <span class="n">ground_truth</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">evaluate</span><span class="p">(</span>
+    <span class="n">dataset</span><span class="o">=</span><span class="n">hf_ds</span><span class="p">,</span>
+    <span class="n">llm</span><span class="o">=</span><span class="n">ragas_llm</span><span class="p">,</span>
+    <span class="n">embeddings</span><span class="o">=</span><span class="n">ragas_embeddings</span><span class="p">,</span>
+<span class="p">)</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="s2">"Primary SRS:"</span><span class="p">,</span> <span class="n">PRIMARY_SRS</span><span class="p">)</span>
-<span class="nb">len</span><span class="p">(</span><span class="n">ground_truth</span><span class="p">),</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="s2">"question_id"</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">ground_truth</span><span class="p">]</span>
+<span class="n">OUT_DIR</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">df_scores</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">to_pandas</span><span class="p">()</span>
+<span class="n">df_scores</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s2">"question_id"</span><span class="p">,</span> <span class="n">meta_ids</span><span class="p">[:</span> <span class="nb">len</span><span class="p">(</span><span class="n">df_scores</span><span class="p">)])</span>
+
+<span class="n">csv_path</span> <span class="o">=</span> <span class="n">OUT_DIR</span> <span class="o">/</span> <span class="s2">"ragas_default_metrics.csv"</span>
+<span class="n">json_path</span> <span class="o">=</span> <span class="n">OUT_DIR</span> <span class="o">/</span> <span class="s2">"ragas_default_metrics.json"</span>
+
+<span class="n">df_scores</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">csv_path</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="k">with</span> <span class="n">json_path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">"w"</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">df_scores</span><span class="o">.</span><span class="n">to_json</span><span class="p">(</span><span class="n">orient</span><span class="o">=</span><span class="s2">"records"</span><span class="p">,</span> <span class="n">force_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"RAGAS rows:"</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">df_scores</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Saved CSV:"</span><span class="p">,</span> <span class="n">csv_path</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Saved JSON:"</span><span class="p">,</span> <span class="n">json_path</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Mean scores:"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">df_scores</span><span class="o">.</span><span class="n">select_dtypes</span><span class="p">(</span><span class="n">include</span><span class="o">=</span><span class="p">[</span><span class="s2">"number"</span><span class="p">])</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">numeric_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">4</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
@@ -7956,71 +8052,84 @@ a.anchor-link {
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Primary SRS: D:\Qbrainpython\QBrain\rag_lab\data\srs\JDECo_SRS.docx[1].pdf
+<pre>Evaluating:   0%|          | 0/80 [00:00&lt;?, ?it/s]</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>LLM returned 1 generations instead of requested 3. Proceeding with 1 generations.
+LLM returned 1 generations instead of requested 3. Proceeding with 1 generations.
+LLM returned 1 generations instead of requested 3. Proceeding with 1 generations.
+LLM returned 1 generations instead of requested 3. Proceeding with 1 generations.
+LLM returned 1 generations instead of requested 3. Proceeding with 1 generations.
+LLM returned 1 generations instead of requested 3. Proceeding with 1 generations.
+LLM returned 1 generations instead of requested 3. Proceeding with 1 generations.
+LLM returned 1 generations instead of requested 3. Proceeding with 1 generations.
+LLM returned 1 generations instead of requested 3. Proceeding with 1 generations.
+LLM returned 1 generations instead of requested 3. Proceeding with 1 generations.
+LLM returned 1 generations instead of requested 3. Proceeding with 1 generations.
+LLM returned 1 generations instead of requested 3. Proceeding with 1 generations.
+LLM returned 1 generations instead of requested 3. Proceeding with 1 generations.
+LLM returned 1 generations instead of requested 3. Proceeding with 1 generations.
+LLM returned 1 generations instead of requested 3. Proceeding with 1 generations.
+LLM returned 1 generations instead of requested 3. Proceeding with 1 generations.
+LLM returned 1 generations instead of requested 3. Proceeding with 1 generations.
+LLM returned 1 generations instead of requested 3. Proceeding with 1 generations.
+LLM returned 1 generations instead of requested 3. Proceeding with 1 generations.
+LLM returned 1 generations instead of requested 3. Proceeding with 1 generations.
 </pre>
 </div>
 </div>
-<div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[2]:</div>
-<div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
-<pre>(10,
- ['q_jdeco_01',
-  'q_jdeco_02',
-  'q_jdeco_03',
-  'q_jdeco_04',
-  'q_jdeco_05',
-  'q_jdeco_06',
-  'q_jdeco_07',
-  'q_jdeco_08',
-  'q_jdeco_09',
-  'q_jdeco_10'])</pre>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>RAGAS rows: 20
+Saved CSV: D:\Qbrainpython\QBrain\rag_lab\data\outputs\evaluation\ragas\ragas_default_metrics.csv
+Saved JSON: D:\Qbrainpython\QBrain\rag_lab\data\outputs\evaluation\ragas\ragas_default_metrics.json
+Mean scores:
+answer_relevancy     0.8070
+context_precision    0.8535
+faithfulness         0.9583
+context_recall       0.9000
+dtype: float64
+</pre>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=5ea9f981">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=8715884b">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="Next-code-cell-%E2%80%94-build-FAISS-indexes-per-SRS-file">Next code cell — build FAISS indexes per SRS file<a class="anchor-link" href="#Next-code-cell-%E2%80%94-build-FAISS-indexes-per-SRS-file">¶</a></h3><p><strong>Data:</strong> Text extracted from each <code>.pdf</code>/<code>.txt</code> under <strong><code>data/srs/</code></strong> via <code>load_document</code>, then <code>chunk_text</code>, then <code>build_faiss_store</code>.
-<strong>Why:</strong> Each JSON item points to <code>srs_file</code>; there must be an in-memory index whose key is that <strong>filename</strong>.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=38d8013d">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=80fd382d">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [3]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [10]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">build_store_for_file</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">):</span>
-    <span class="n">text</span> <span class="o">=</span> <span class="n">load_document</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
-    <span class="n">chunks</span> <span class="o">=</span> <span class="n">chunk_text</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
-    <span class="n">metas</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">chunks</span><span class="p">):</span>
-        <span class="n">metas</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"source_file"</span><span class="p">:</span> <span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="s2">"chunk_id"</span><span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">})</span>
-    <span class="k">return</span> <span class="n">build_faiss_store</span><span class="p">(</span><span class="n">chunks</span><span class="p">,</span> <span class="n">metas</span><span class="p">)</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1">## 4) Compare RAGAS means with benchmark summary (optional)</span>
 
+<span class="n">benchmark_summary_csv</span> <span class="o">=</span> <span class="n">ROOT</span> <span class="o">/</span> <span class="s2">"data"</span> <span class="o">/</span> <span class="s2">"outputs"</span> <span class="o">/</span> <span class="s2">"evaluation"</span> <span class="o">/</span> <span class="s2">"rag_benchmark"</span> <span class="o">/</span> <span class="s2">"overall_summary.csv"</span>
+<span class="k">if</span> <span class="n">benchmark_summary_csv</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+    <span class="n">benchmark_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">benchmark_summary_csv</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Benchmark overall summary:"</span><span class="p">)</span>
+    <span class="n">display</span><span class="p">(</span><span class="n">benchmark_df</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"No benchmark overall_summary.csv found at:"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">benchmark_summary_csv</span><span class="p">)</span>
 
-<span class="n">paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">PRIMARY_SRS</span><span class="p">]</span>
-<span class="n">seen</span> <span class="o">=</span> <span class="p">{</span><span class="n">p</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">paths</span><span class="p">}</span>
-<span class="c1"># Recursive: include nested folders (e.g. NL Requirements dataset unzipped under data/srs/)</span>
-<span class="n">_srs_extra</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-<span class="k">for</span> <span class="n">_pat</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"*.txt"</span><span class="p">,</span> <span class="s2">"*.pdf"</span><span class="p">,</span> <span class="s2">"*.html"</span><span class="p">,</span> <span class="s2">"*.htm"</span><span class="p">):</span>
-    <span class="n">_srs_extra</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">SRS_DIR</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="n">_pat</span><span class="p">))</span>
-<span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">_srs_extra</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()):</span>
-    <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
-        <span class="n">paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
-        <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">resolve</span><span class="p">())</span>
-
-<span class="c1"># Basenames must be unique across paths (ground_truth JSON uses file names only).</span>
-<span class="n">stores</span> <span class="o">=</span> <span class="p">{</span><span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">build_store_for_file</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">paths</span><span class="p">}</span>
-<span class="nb">list</span><span class="p">(</span><span class="n">stores</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">RAGAS mean scores:"</span><span class="p">)</span>
+<span class="n">ragas_means</span> <span class="o">=</span> <span class="n">df_scores</span><span class="o">.</span><span class="n">select_dtypes</span><span class="p">(</span><span class="n">include</span><span class="o">=</span><span class="p">[</span><span class="s2">"number"</span><span class="p">])</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">numeric_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">sort_index</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">ragas_means</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">4</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
@@ -8030,177 +8139,16 @@ a.anchor-link {
 <div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[3]:</div>
-<div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
-<pre>['JDECo_SRS.docx[1].pdf',
- '2007 - ertms.pdf',
- '2008 - keepass.pdf',
- '2009 - inventory 2.0.pdf',
- '2010 - gparted.pdf']</pre>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>Benchmark overall summary:
+</pre>
 </div>
 </div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=e4b89e88">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="Next-code-cell-%E2%80%94-main-RAG-evaluation-loop-(strict-mode)">Next code cell — main RAG evaluation loop (strict mode)<a class="anchor-link" href="#Next-code-cell-%E2%80%94-main-RAG-evaluation-loop-(strict-mode)">¶</a></h3><p><strong>Data:</strong> Per item: question, reference answer from JSON, and the store for <code>srs_file</code>.
-<strong>Steps:</strong> <code>retrieve_top_k</code> → <code>answer_with_context(..., temperature=0.1, evaluation_mode=True)</code> → <code>semantic_similarity(expected, generated)</code>.
-<strong>How results are formed:</strong> Embedding cosine similarity between reference and generated text; <code>hit_file</code> is true if any basename from <code>relevant_files</code> appears in the top-K chunk metadata.</p>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=0b4c791e">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [4]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">K</span> <span class="o">=</span> <span class="mi">5</span>
-<span class="n">GEN_THRESHOLD</span> <span class="o">=</span> <span class="mf">0.72</span>
-<span class="n">ANSWER_TEMPERATURE</span> <span class="o">=</span> <span class="mf">0.1</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">unique_in_order</span><span class="p">(</span><span class="n">values</span><span class="p">):</span>
-    <span class="n">seen</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-    <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">v</span> <span class="ow">and</span> <span class="n">v</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
-            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
-            <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">out</span>
-
-
-<span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
-<span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">ground_truth</span><span class="p">:</span>
-    <span class="n">fname</span> <span class="o">=</span> <span class="n">item</span><span class="p">[</span><span class="s2">"srs_file"</span><span class="p">]</span>
-    <span class="k">if</span> <span class="n">fname</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">stores</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Missing SRS index for: </span><span class="si">{</span><span class="n">fname</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-
-    <span class="n">store</span> <span class="o">=</span> <span class="n">stores</span><span class="p">[</span><span class="n">fname</span><span class="p">]</span>
-    <span class="n">q</span> <span class="o">=</span> <span class="n">item</span><span class="p">[</span><span class="s2">"question"</span><span class="p">]</span>
-    <span class="n">docs</span> <span class="o">=</span> <span class="n">retrieve_top_k</span><span class="p">(</span><span class="n">store</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">K</span><span class="p">)</span>
-
-    <span class="n">retrieved_files</span> <span class="o">=</span> <span class="n">unique_in_order</span><span class="p">([</span><span class="n">d</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"source_file"</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">docs</span><span class="p">])</span>
-    <span class="n">retrieved_chunk_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"chunk_id"</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">docs</span><span class="p">]</span>
-
-    <span class="n">answer</span> <span class="o">=</span> <span class="n">answer_with_context</span><span class="p">(</span>
-        <span class="n">q</span><span class="p">,</span>
-        <span class="n">docs</span><span class="p">,</span>
-        <span class="n">temperature</span><span class="o">=</span><span class="n">ANSWER_TEMPERATURE</span><span class="p">,</span>
-        <span class="n">evaluation_mode</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-    <span class="p">)</span>
-
-    <span class="n">sim</span> <span class="o">=</span> <span class="n">semantic_similarity</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="s2">"expected_answer"</span><span class="p">],</span> <span class="n">answer</span><span class="p">)</span>
-    <span class="n">relevant_files</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"relevant_files"</span><span class="p">,</span> <span class="p">[</span><span class="n">fname</span><span class="p">])</span>
-
-    <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-        <span class="p">{</span>
-            <span class="s2">"question_id"</span><span class="p">:</span> <span class="n">item</span><span class="p">[</span><span class="s2">"question_id"</span><span class="p">],</span>
-            <span class="s2">"question"</span><span class="p">:</span> <span class="n">q</span><span class="p">,</span>
-            <span class="s2">"srs_file"</span><span class="p">:</span> <span class="n">fname</span><span class="p">,</span>
-            <span class="s2">"relevant_files"</span><span class="p">:</span> <span class="s2">";"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">relevant_files</span><span class="p">),</span>
-            <span class="s2">"retrieved_files_topk"</span><span class="p">:</span> <span class="s2">";"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">retrieved_files</span><span class="p">),</span>
-            <span class="s2">"retrieved_chunk_ids"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">retrieved_chunk_ids</span><span class="p">),</span>
-            <span class="s2">"hit_file"</span><span class="p">:</span> <span class="nb">any</span><span class="p">(</span><span class="n">f</span> <span class="ow">in</span> <span class="n">retrieved_files</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">relevant_files</span><span class="p">),</span>
-            <span class="s2">"similarity"</span><span class="p">:</span> <span class="n">sim</span><span class="p">,</span>
-            <span class="s2">"similarity_percent"</span><span class="p">:</span> <span class="n">sim</span> <span class="o">*</span> <span class="mf">100.0</span><span class="p">,</span>
-            <span class="s2">"gen_correct"</span><span class="p">:</span> <span class="n">sim</span> <span class="o">&gt;=</span> <span class="n">GEN_THRESHOLD</span><span class="p">,</span>
-            <span class="s2">"generated_answer"</span><span class="p">:</span> <span class="n">answer</span><span class="p">,</span>
-            <span class="s2">"expected_answer"</span><span class="p">:</span> <span class="n">item</span><span class="p">[</span><span class="s2">"expected_answer"</span><span class="p">],</span>
-        <span class="p">}</span>
-    <span class="p">)</span>
-
-<span class="n">results</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[4]:</div>
-<div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
-<pre>[{'question_id': 'q_jdeco_01',
-  'question': 'How can a customer submit a new service request in JDECo-SMS?',
-  'srs_file': 'JDECo_SRS.docx[1].pdf',
-  'relevant_files': 'JDECo_SRS.docx[1].pdf',
-  'retrieved_files_topk': 'JDECo_SRS.docx[1].pdf',
-  'retrieved_chunk_ids': '[14, 13, 21, 6, 16]',
-  'hit_file': True,
-  'similarity': 0.883423007104328,
-  'similarity_percent': 88.3423007104328,
-  'gen_correct': True,
-  'generated_answer': 'The customer can request a service from JDECo-SMS by accessing it using a mobile application or JDECo portal.',
-  'expected_answer': 'Customers can submit service requests through the JDECo-SMS mobile application or website, providing required details and supporting documents for the requested service.'},
- {'question_id': 'q_jdeco_02',
-  'question': 'Who are the main user roles or departments involved in processing service requests?',
-  'srs_file': 'JDECo_SRS.docx[1].pdf',
-  'relevant_files': 'JDECo_SRS.docx[1].pdf',
-  'retrieved_files_topk': 'JDECo_SRS.docx[1].pdf',
-  'retrieved_chunk_ids': '[20, 14, 5, 15, 27]',
-  'hit_file': True,
-  'similarity': 0.5537038740592165,
-  'similarity_percent': 55.37038740592165,
-  'gen_correct': False,
-  'generated_answer': 'The main user roles or departments involved are Customer, Customer Services, Financial Department, Technical Department, and Inventory Department.',
-  'expected_answer': 'The SRS describes workflows involving customer service (CS), technical distribution (TD), finance (FD), and customers interacting with JDECo-SMS.'}]</pre>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=f523f3ac">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="Next-code-cell-%E2%80%94-aggregate-metrics">Next code cell — aggregate metrics<a class="anchor-link" href="#Next-code-cell-%E2%80%94-aggregate-metrics">¶</a></h3><p><strong>Input:</strong> List <code>results</code> from the previous step.
-<strong>Output:</strong> Mean Hit@K, fraction of items above the similarity threshold (“answer accuracy”), and mean similarity — in a small <code>summary</code> DataFrame.</p>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=69b35e36">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [5]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">hit_at_k</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">results</span> <span class="k">if</span> <span class="n">r</span><span class="p">[</span><span class="s2">"hit_file"</span><span class="p">])</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
-<span class="n">answer_accuracy</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">results</span> <span class="k">if</span> <span class="n">r</span><span class="p">[</span><span class="s2">"gen_correct"</span><span class="p">])</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
-<span class="n">avg_sim</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"similarity"</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">results</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
-
-<span class="n">summary</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">([</span>
-    <span class="p">{</span><span class="s2">"metric"</span><span class="p">:</span> <span class="s2">"Hit@5 (relevant file in top-k)"</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">:</span> <span class="n">hit_at_k</span><span class="p">},</span>
-    <span class="p">{</span><span class="s2">"metric"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"Answer accuracy (sim ≥ </span><span class="si">{</span><span class="n">GEN_THRESHOLD</span><span class="si">}</span><span class="s2">)"</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">:</span> <span class="n">answer_accuracy</span><span class="p">},</span>
-    <span class="p">{</span><span class="s2">"metric"</span><span class="p">:</span> <span class="s2">"Average semantic similarity"</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">:</span> <span class="n">avg_sim</span><span class="p">},</span>
-<span class="p">])</span>
-<span class="n">summary</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[5]:</div>
-<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output" data-mime-type="text/html" tabindex="0">
 <div>
 <style scoped="">
     .dataframe tbody tr th:only-of-type {
@@ -8226,204 +8174,73 @@ a.anchor-link {
 <tbody>
 <tr>
 <th>0</th>
-<td>Hit@5 (relevant file in top-k)</td>
-<td>1.000000</td>
+<td>srs_files</td>
+<td>5.000000</td>
 </tr>
 <tr>
 <th>1</th>
-<td>Answer accuracy (sim ≥ 0.72)</td>
-<td>0.600000</td>
+<td>questions</td>
+<td>60.000000</td>
 </tr>
 <tr>
 <th>2</th>
-<td>Average semantic similarity</td>
-<td>0.713838</td>
+<td>retrieval_hit@5</td>
+<td>1.000000</td>
+</tr>
+<tr>
+<th>3</th>
+<td>retrieval_precision@5</td>
+<td>0.200000</td>
+</tr>
+<tr>
+<th>4</th>
+<td>retrieval_recall@5</td>
+<td>1.000000</td>
+</tr>
+<tr>
+<th>5</th>
+<td>retrieval_mrr</td>
+<td>1.000000</td>
+</tr>
+<tr>
+<th>6</th>
+<td>generation_accuracy_sim&gt;=0.65</td>
+<td>0.783333</td>
+</tr>
+<tr>
+<th>7</th>
+<td>generation_avg_similarity</td>
+<td>0.767639</td>
+</tr>
+<tr>
+<th>8</th>
+<td>e2e_success_rate</td>
+<td>0.783333</td>
 </tr>
 </tbody>
 </table>
 </div>
 </div>
 </div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=1aa729e4">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="Next-code-cell-%E2%80%94-export-CSVs">Next code cell — export CSVs<a class="anchor-link" href="#Next-code-cell-%E2%80%94-export-CSVs">¶</a></h3><p><strong>Why:</strong> Persist results for spreadsheets or a paper: <code>data/outputs/</code> and <code>results/tables/</code>.</p>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=5907f9af">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [7]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">out_dir</span> <span class="o">=</span> <span class="n">RAG_LAB</span> <span class="o">/</span> <span class="s2">"data"</span> <span class="o">/</span> <span class="s2">"outputs"</span>
-<span class="n">tables_dir</span> <span class="o">=</span> <span class="n">RAG_LAB</span> <span class="o">/</span> <span class="s2">"results"</span> <span class="o">/</span> <span class="s2">"tables"</span>
-<span class="n">out_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="n">tables_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-<span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
-<span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">out_dir</span> <span class="o">/</span> <span class="s2">"evaluation_results.csv"</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-<span class="n">summary</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">out_dir</span> <span class="o">/</span> <span class="s2">"summary_metrics.csv"</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-
-<span class="n">retrieval_cols</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"question_id"</span><span class="p">,</span> <span class="s2">"srs_file"</span><span class="p">,</span> <span class="s2">"hit_file"</span><span class="p">,</span> <span class="s2">"relevant_files"</span><span class="p">,</span> <span class="s2">"retrieved_files_topk"</span><span class="p">]</span>
-<span class="n">df</span><span class="p">[</span><span class="n">retrieval_cols</span><span class="p">]</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">tables_dir</span> <span class="o">/</span> <span class="s2">"retrieval_table.csv"</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-<span class="n">df</span><span class="p">[[</span><span class="s2">"question_id"</span><span class="p">,</span> <span class="s2">"similarity"</span><span class="p">,</span> <span class="s2">"gen_correct"</span><span class="p">,</span> <span class="s2">"expected_answer"</span><span class="p">,</span> <span class="s2">"generated_answer"</span><span class="p">]]</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span>
-    <span class="n">tables_dir</span> <span class="o">/</span> <span class="s2">"generation_table.csv"</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span>
-<span class="p">)</span>
-<span class="n">summary</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">tables_dir</span> <span class="o">/</span> <span class="s2">"evaluation_summary.csv"</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="s2">"Saved:"</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">"Tables:"</span><span class="p">,</span> <span class="n">tables_dir</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Saved: D:\Qbrainpython\QBrain\rag_lab\data\outputs
-Tables: D:\Qbrainpython\QBrain\rag_lab\results\tables
+<pre>
+RAGAS mean scores:
+answer_relevancy     0.8070
+context_precision    0.8535
+context_recall       0.9000
+faithfulness         0.9583
+dtype: float64
 </pre>
 </div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=616282c0">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="Next-code-cell-%E2%80%94-optional-feature-/-testcase-tables">Next code cell — optional feature / testcase tables<a class="anchor-link" href="#Next-code-cell-%E2%80%94-optional-feature-/-testcase-tables">¶</a></h3><p><strong>Data:</strong> If present, <code>feature_ground_truth.json</code> or <code>testcases_ground_truth.json</code> under <code>data/ground_truth/</code>.
-<strong>Why:</strong> Appendix tables for reports; if files are missing, nothing fails.</p>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=3f250ce9">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [8]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">feat_path</span> <span class="o">=</span> <span class="n">RAG_LAB</span> <span class="o">/</span> <span class="s2">"data"</span> <span class="o">/</span> <span class="s2">"ground_truth"</span> <span class="o">/</span> <span class="s2">"feature_ground_truth.json"</span>
-<span class="n">tc_path</span> <span class="o">=</span> <span class="n">RAG_LAB</span> <span class="o">/</span> <span class="s2">"data"</span> <span class="o">/</span> <span class="s2">"ground_truth"</span> <span class="o">/</span> <span class="s2">"testcases_ground_truth.json"</span>
-
-<span class="k">if</span> <span class="n">feat_path</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">feat_path</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-        <span class="n">feat</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-    <span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">srs_name</span><span class="p">,</span> <span class="n">items</span> <span class="ow">in</span> <span class="n">feat</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="k">if</span> <span class="n">srs_name</span> <span class="o">==</span> <span class="s2">"description"</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">items</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-            <span class="k">continue</span>
-        <span class="k">for</span> <span class="n">it</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
-            <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"srs_file"</span><span class="p">:</span> <span class="n">srs_name</span><span class="p">,</span> <span class="o">**</span><span class="n">it</span><span class="p">})</span>
-    <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">tables_dir</span> <span class="o">/</span> <span class="s2">"feature_table.csv"</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-
-<span class="k">if</span> <span class="n">tc_path</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">tc_path</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-        <span class="n">tc</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-    <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">tc</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"features"</span><span class="p">,</span> <span class="p">[]))</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">tables_dir</span> <span class="o">/</span> <span class="s2">"testcase_table.csv"</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="s2">"Feature/testcase tables updated (if JSON present)."</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Feature/testcase tables updated (if JSON present).
-</pre>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=0493adfb">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="Next-code-cell-%E2%80%94-similarity-histogram">Next code cell — similarity histogram<a class="anchor-link" href="#Next-code-cell-%E2%80%94-similarity-histogram">¶</a></h3><p><strong>Data:</strong> Column <code>similarity</code> from <code>df</code>.
-<strong>Output:</strong> Figure <code>similarity_distribution.png</code> under <code>results/figures/</code> to see how scores spread across questions.</p>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=a23eadcf">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [9]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">try</span><span class="p">:</span>
-    <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
-
-    <span class="n">fig_dir</span> <span class="o">=</span> <span class="n">RAG_LAB</span> <span class="o">/</span> <span class="s2">"results"</span> <span class="o">/</span> <span class="s2">"figures"</span>
-    <span class="n">fig_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">"similarity"</span><span class="p">],</span> <span class="n">bins</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s2">"black"</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"Semantic similarity"</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"Count"</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">"Answer similarity distribution"</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">fig_dir</span> <span class="o">/</span> <span class="s2">"similarity_distribution.png"</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">150</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
-<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"Install matplotlib to save figures."</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedImage jp-OutputArea-output" tabindex="0">
-<img alt="No description has been provided for this image" class="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAk4AAAGGCAYAAACNCg6xAAAAOnRFWHRTb2Z0d2FyZQBNYXRwbG90bGliIHZlcnNpb24zLjEwLjgsIGh0dHBzOi8vbWF0cGxvdGxpYi5vcmcvwVt1zgAAAAlwSFlzAAAPYQAAD2EBqD+naQAANaFJREFUeJzt3Ql0FFXa//EnbAkoRPZACIuAIcgOLsQFUBBkGXhnBhUdiQzgMqAsDjpxAQF9gyLbKLIoEEdEFGVRRJDFiAgqqwIKI4IGMAFZQxAChPqf577/btOhO7mBJE2nv59z6iRVXVV9q6qhf7n31q0Qx3EcAQAAQK6K5b4KAAAACE4AAAB5QI0TAACAJYITAACAJYITAACAJYITAACAJYITAACAJYITAACAJYITAACAJYITgHwTEhIizz33XL7t7+effzb7TExMdC/T/euy/Fa7dm154IEHxF/atm1rppyOvaDoe+h76XtmPR9du3aVwpCUlGTeX38ClzuCE2DptddeM/+533DDDZyzIPD999+bkJY1TATK57QwwlZRKxtgq4T1mkCQe/vtt81f4d98843s2rVL6tWr5+8iXXZOnTolJUrk338rtWrVMvssWbKkFLSdO3dKsWLFPILTyJEjTS2QXvfCdrHHruGkUqVKeao9u//+++Wee+6R0NDQiyjppZft1ltvNcdaqlSpAn1/ID9Q4wRY2LNnj6xdu1bGjx8vlStXNiGqqDl//rycPn36kvYRFhaWr8FJa/h0n8WLF5eCoM841y9spaGhMALa5XLs6uTJk+anvoe+V0E0gdrQwKrvnzW4ApcrPqWABQ1K5cuXly5dushf//pXr8HJ1Sfl5ZdflunTp0vdunXNl/F1110n69ev91g3NTVV+vTpIzVq1DDrVKtWTbp37+5uFho6dKhUrFjRfLG7PProo2b///73v93LDhw4YJZNmTLFvSwjI0NGjBhhasR031FRUfLEE0+Y5VnpdgMHDjTHcu2115p1ly5d6vMcbNiwQTp27GhqDEqXLi116tSRv//97zn2cXL1R/rvf/8rf/vb3yQ8PNwEz2effdYc2969e81xlytXTiIiImTcuHFez2luzTuzZs2S2267TapUqWKOo2HDhh7nJHu/nWXLlkmrVq3McUybNs39mqsmRN+vZ8+e5vd27dqZMrj64MTFxZlzcPbs2Qv2f8cdd0h0dLTkxvX50Pe//vrr5YsvvrhgHW/HntvnRo9h+/bt8vnnn7vL7Oo35erHpK/94x//MOdK95P1NW/Nkp9++qk0a9bMBBs9r/Pnz/d43Vefs+z7zKlsvvo4zZs3T1q2bGnOk55z/Qzt37/fYx29ZldeeaVZ3qNHD/O7fsb++c9/SmZmZq7XAsgrmuoACxou/vznP5umhF69epkvZQ1DGoqymzNnjpw4cUIeeugh82Xw0ksvmW13797trtH4y1/+Yr5ENAzpF8rBgwdl+fLlkpycbOZvueUWmTBhglmnUaNGZhv9ctW/yPXnY4895l7maupw1Rr96U9/kjVr1siDDz4oMTExsnXrVrMvDS8LFy70KOuqVavkvffeMwFKv5h8NUlp+TQU6BfSv/71L7nqqqvMF2L2L1Ff7r77blOWMWPGyMcffyzPP/+8VKhQwYQWDTwvvviiOcf6Zafn1HU8tvR6aPjTY9car48++siEAz0fAwYMuKBJTq+hXp/+/ft7DTr6/nqONaQ+9dRTpuxKf2qz1n/+8x8TvrJ2ntZQo+dTQ2tOZsyYYd47NjZWBg8ebD4XWm49Hxpyc5Lb52bixInmNQ0PTz/9tNmmatWqHvvQ86LXcfjw4e4aJ19+/PFHc+0efvhhExg1oGqg1IDdoUMHyQubsmUPXhoS9fOQkJBg/kiYNGmSfPnll7J582bzGXTRgKShXvsf6h8uK1asMCFcw+kjjzySp3ICuXIA5GjDhg1a7eMsX77czJ8/f96pUaOGM2jQII/19uzZY9arWLGic+TIEffyRYsWmeUfffSRmT969KiZHzt2rM/3PHjwoFnntddeM/PHjh1zihUr5vTs2dOpWrWqe73HHnvMqVChgimTeuutt8x6X3zxhcf+pk6davb35ZdfupfpvK67ffv2XD8BCxYsMOuvX78+x/V0nREjRrjn9Xdd9uCDD7qXnTt3zpy/kJAQZ8yYMe7lel5Kly7txMXFXXBOZ82adcE+s/r9998vKEvHjh2dq6++2mNZrVq1zLZLly69YH19Let7z5s3z6z72WefeayXmZlpyn/33Xd7LB8/frw5pt27d/s8P2fOnHGqVKniNGvWzMnIyHAvnz59unmvNm3a+Dx2m8+Nuvbaaz3246L70e1vvvlmcw28vabvmfV86LIPPvjAvez48eNOtWrVnObNm+d4PXzt01fZ9BxnPdeu89SoUSPn1KlT7vUWL15s1hs+fLh7mV4zXTZq1CiPfWoZW7ZsmeO5Ai4GTXVALrQmRP8y1iYbpbVI+lf43LlzvTYF6GvarOeitUdKaxaUNjtozZU2Sxw9etTre2qNQIMGDWT16tVmXv/K1n4ow4YNM395a02Aq8bp5ptvdjeVaNOG1orotocOHXJPWqujPvvsM4/3adOmjWl+yY3rr/vFixd7baLKTb9+/dy/63FoM5nmrL59+3q8h9b+uM5TXug5dTl+/Lg5Zj023ZfOZ6VNjFo7cbG01u++++6TDz/80NQsZv2caC2S7j+n5k6tJdIanKwdobW5SZsxc2LzubGhtWy2/aaqV68u//M//+Oe1ybV3r17mxofrWErKK7zpLVj2kTook3l+tnWWsvs9Jxmpf/uLuazBOSG4ATkQIORBiQNTdpBXO+m00mbBDTArFy58oJtatas6THvClGuLzvtm6JNU5988okJZNospM152b+I9D9+V1Oc/tSwoZM26eh8WlqafPvtt+5gpjRQaVOOBq+s0zXXXGNe1y+jrHL6ks9KQ4g2E+ldZtqkp/1qtNkme78pX7KfEw0J+oWo+8q+/GJCgQbL9u3byxVXXGECmB6zNrEpb8HpUml40E7lCxYscDf/bdy40TTj5eSXX34xP+vXr++xXJtwr7766hy3tf3c5CYvx6/95LL3X3J9lgpymAbXefLWjKrByfW6i36W9Jpn/3d3KQET8IXgBORA+6ykpKSY8KRfdq7prrvuMq976yTu66/5rB29tW+L9jnSvhv6n752ltaaIv1L3kVrkrTDq/7VrEFJA5J+ielynde7/LQPT9bgpPONGzc2/V68TfoXvK+ampzo+77//vuybt060x9Ky6Udw7Xjbnp6eq7bezsnNufJxk8//SS33367qWXSux61NkKPdciQIe5zcjHHnBOtpdNjnz17tpnXn1ob5PpcFBSbz01u8uP4s/J1J15hdswuyDsPgewITkAONBjp3UfaBJZ90g7GWuPgup09r7Tj6uOPP27uWtq2bZucOXPG464yVyDSEKAd0V3zWtOgwUknrWHRL/Cs+zxy5IgJEloDk32yueMrJzfeeKO88MILpilFz43Wbmmo9CftCK41X9p0pp2uO3fubI71UgNCbrfma62TK1jrDQHajJS1idbX2EzK1dTqos2fWqOZH5+b/BxSQGtXswdZDW7KdSOB65iPHTvmsV72WqG8lM11nrQmLztd5nod8AeCE+CDBiK9a0zvnNIhCLJPWvOifVz0Czsvfv/99wvGS9Ivw7Jly3o0fWmTSmRkpLkjTr9Yb7rpJrNcA5TWsmgNkAaZrOMmaY2H1ga9/vrrXo8nt7uofNEmj+xfoHqLurJtrivo2oas5dPmOW1KvBQaSr0FAhcNzhoEBg0aZGoF9Vb53GhTqzYpTZ061QSerHeQ+XqfvH5utNy57cvWr7/+6m6OVNo8rHcU6rXX4SNcZVCu/nhKP2dvvvnmBfuzLZueJ/2DRc9T1mPTZsoffvjBhFTAXxiOAPDB1flXbxX3RkOLazBM7RBuS/9i1xohDTna5KPBR7+ctM+Ujt6clYYkrdHR5jfXX/YtWrQwX0C6n3vvvddjfe1jo8MLaEdZ7QiuYUubTHbs2GGWu8Yvyiv9EtRRn7WjsH5R6nnRcKadhbWGx590mARtJuvWrZupcdKmQy2bfvFqbdDF0nCgoUz7FWkQ0z5GrrGilF77Tp06mdpH7Vdl82WufZl0KAYtp+5LPzda06QhL7c+TrafG62B1OEZ9H20j5KW13VzQF5pfybtwK81ntqvaubMmeb9soZSPf/ah03X05sX9Jzpenp+dJiErGzLpudJz7sOR6D96zSkuoYj0JouVzMs4A8EJ8AHDUTaj8TXeDV6d5V+Wep6hw8ftj6POlaPfhFox/K33nrLfAFqh1cNNtoB21tw0n5N7n+0JUpI69atzVg1Wfs3ucqkYzVpLZXWDOgXa5kyZcyXstaMuDr25pV+eemjZrQs+gWmnbh14EY99vzobH0ptPlRa9+eeeYZMw6U1oTo2D36xZ19gM680P1ojYf2J9JQoAFUw6grOLma6/ROQw0zto8r0fG1dF9jx441QUNDsYZ07a+UH58bHZ9Jm8m047gGXL12FxuctD/fK6+8YsqpTWR6rd99912PuxI15OjnTPvP6THoedO+WBr0NfhklZey6Z2G+tnVsb+efPJJ88eCBncNVFnHcAIKW4iOSVDo7woARcCiRYvMaNXaTJU9xAIomghOAHCRtP+b9rnRTtT+es4bgMJFUx0A5JE2WX733Xdm6APtd0NoAoIHNU4AkNf/OENCzDPXtHO39oPKemcjgKKNf+0AkEd0DQWCF+M4AQAAWCI4AQAAWAq6pjp9bpWOhquj7dKhEwAAOI5jxharXr26GQ8vJ0EXnDQ06UByAAAAWe3du1dq1KghOQm64KQ1Ta6To4+LAAAAwS0tLc1UqrgyQk6CLji5muc0NBGcAACAi00XHjqHAwAAWCI4AQAAWCI4AQAAWCI4AQAAWCI4AQAAWCI4AQAAWCI4AQAABFpwGjNmjBk/YfDgwTmuN2/ePGnQoIGEhYVJ48aNZcmSJYVWRgAAENwui+C0fv16mTZtmjRp0iTH9dauXSu9evWSvn37yubNm6VHjx5m2rZtW6GVFQAABC+/B6f09HS577775PXXX5fy5cvnuO6kSZOkU6dOMmzYMImJiZHRo0dLixYt5NVXXy208gIAgODl9+A0YMAA6dKli7Rv3z7XddetW3fBeh07djTLAQAACppfn1U3d+5c2bRpk2mqs5GamipVq1b1WKbzutyXjIwMM2V9kB8AAMEoOTlZDh06JIGoUqVKUrNmzeANTnv37pVBgwbJ8uXLTUfvgpKQkCAjR44ssP0DABAooSm6QYycPvW7BKKw0mVk544f/B6e/BacNm7cKAcPHjR9lFwyMzNl9erVps+S1hIVL17cY5uIiAg5cOCAxzKd1+W+xMfHy9ChQz1qnKKiovL1WAAAuNxpTZOGpopdH5eSFQPre/Ds4b1yePE4cwxBG5xuv/122bp1q8eyPn36mKEGnnzyyQtCk2rdurWsXLnSY8gCrbHS5b6EhoaaCQAAiAlNoRH1OBWBFpzKli0rjRo18lh2xRVXSMWKFd3Le/fuLZGRkaa5TWnTXps2bWTcuHGmQ7n2kdqwYYNMnz7dL8cAAACCi9/vqsutPTYlJcU9HxsbK3PmzDFBqWnTpvL+++/LwoULLwhgAAAARe6uuuySkpJynFc9e/Y0EwAAQGG7rGucAAAALicEJwAAAEsEJwAAAEsEJwAAAEsEJwAAAEsEJwAAAEsEJwAAAEsEJwAAAEsEJwAAAEsEJwAAAEsEJwAAAEsEJwAAAEsEJwAAAEsEJwAAAEsEJwAAAEsEJwAAAEsEJwAAAEsEJwAAAEsEJwAAAEsEJwAAAEsEJwAAAEsEJwAAAEsEJwAAAEsEJwAAAEsEJwAAAEsEJwAAgEAITlOmTJEmTZpIuXLlzNS6dWv55JNPfK6fmJgoISEhHlNYWFihlhkAAASvEv588xo1asiYMWOkfv364jiOvPnmm9K9e3fZvHmzXHvttV630YC1c+dO97yGJwAAgCIfnLp16+Yx/8ILL5haqK+++spncNKgFBERUUglBAAAuAz7OGVmZsrcuXPl5MmTpsnOl/T0dKlVq5ZERUWZ2qnt27fnuN+MjAxJS0vzmAAAAAIyOG3dulWuvPJKCQ0NlYcfflgWLFggDRs29LpudHS0zJw5UxYtWiSzZ8+W8+fPS2xsrOzbt8/n/hMSEiQ8PNw9aeACAAAIyOCkYWjLli3y9ddfyyOPPCJxcXHy/fffe11Xa6J69+4tzZo1kzZt2sj8+fOlcuXKMm3aNJ/7j4+Pl+PHj7unvXv3FuDRAACAosyvfZxUqVKlpF69eub3li1byvr162XSpEk5hiGXkiVLSvPmzWXXrl0+19GaLJ0AAAACvsYpO21+035Jtv2itKmvWrVqBV4uAAAAv9Y4aTPanXfeKTVr1pQTJ07InDlzJCkpSZYtW2Ze12a5yMhI009JjRo1Sm688UZTQ3Xs2DEZO3as/PLLL9KvXz+uJAAAKNrB6eDBgyYcpaSkmI7bOhimhqYOHTqY15OTk6VYsT8qxY4ePSr9+/eX1NRUKV++vGnaW7t2rc/O5AAAAEUmOM2YMSPH17X2KasJEyaYCQAAwB8uuz5OAAAAlyuCEwAAgCWCEwAAgCWCEwAAgCWCEwAAgCWCEwAAgCWCEwAAgCWCEwAAgCWCEwAAgCWCEwAAgCWCEwAAgCWCEwAAgCWCEwAAgCWCEwAAgCWCEwAAgCWCEwAAgCWCEwAAgCWCEwAAgCWCEwAAgCWCEwAAgCWCEwAAAMEJAAAgf1HjBAAAYIngBAAAYIngBAAAEAjBacqUKdKkSRMpV66cmVq3bi2ffPJJjtvMmzdPGjRoIGFhYdK4cWNZsmRJoZUXAAAEN78Gpxo1asiYMWNk48aNsmHDBrntttuke/fusn37dq/rr127Vnr16iV9+/aVzZs3S48ePcy0bdu2Qi87AAAIPn4NTt26dZPOnTtL/fr15ZprrpEXXnhBrrzySvnqq6+8rj9p0iTp1KmTDBs2TGJiYmT06NHSokULefXVVwu97AAAIPiUkMtEZmamaYY7efKkabLzZt26dTJ06FCPZR07dpSFCxf63G9GRoaZXNLS0vKx1AACXXJyshw6dEgCUaVKlaRmzZr+LgYQVPwenLZu3WqC0unTp01t04IFC6Rhw4Ze101NTZWqVat6LNN5Xe5LQkKCjBw5Mt/LDaBohKboBjFy+tTvEojCSpeRnTt+IDwBwRScoqOjZcuWLXL8+HF5//33JS4uTj7//HOf4Smv4uPjPWqptMYpKioqX/YNILBpTZOGpopdH5eSFQPr/4Wzh/fK4cXjzDFQ6wQEUXAqVaqU1KtXz/zesmVLWb9+venLNG3atAvWjYiIkAMHDngs03ld7ktoaKiZAMAXDU2hEf/3/xAABNQ4TufPn/fok5SVNumtXLnSY9ny5ct99okCAAAoMjVO2ox25513mmrmEydOyJw5cyQpKUmWLVtmXu/du7dERkaafkpq0KBB0qZNGxk3bpx06dJF5s6da4YxmD59uj8PAwAABAm/BqeDBw+acJSSkiLh4eFmMEwNTR06dHB33CxW7I9KsdjYWBOunnnmGXnqqafMMAZ6R12jRo38eBQAACBY+DU4zZgxI8fXtfYpu549e5oJAABAgr2PEwAAwOWK4AQAAGCJ4AQAAGCJ4AQAAGCJ4AQAAGCJ4AQAAGCJ4AQAAGCJ4AQAAGCJ4AQAAGCJ4AQAAGCJ4AQAAGCJ4AQAAGCJ4AQAAGCJ4AQAAGCJ4AQAAGCJ4AQAAGCJ4AQAAGCJ4AQAAGCJ4AQAAGCJ4AQAAGCJ4AQAAGCJ4AQAAGCJ4AQAAGCJ4AQAAGCJ4AQAABAIwSkhIUGuu+46KVu2rFSpUkV69OghO3fuzHGbxMRECQkJ8ZjCwsIKrcwAACB4+TU4ff755zJgwAD56quvZPny5XL27Fm544475OTJkzluV65cOUlJSXFPv/zyS6GVGQAABK8S/nzzpUuXXlCbpDVPGzdulFtvvdXndlrLFBERUQglBAAAuEz7OB0/ftz8rFChQo7rpaenS61atSQqKkq6d+8u27dvL6QSAgCAYHbZBKfz58/L4MGD5aabbpJGjRr5XC86OlpmzpwpixYtktmzZ5vtYmNjZd++fV7Xz8jIkLS0NI8JAAAg4JrqstK+Ttu2bZM1a9bkuF7r1q3N5KKhKSYmRqZNmyajR4/22gF95MiRBVJmAAAQXC6LGqeBAwfK4sWL5bPPPpMaNWrkaduSJUtK8+bNZdeuXV5fj4+PN02Armnv3r35VGoAABBs/Frj5DiOPProo7JgwQJJSkqSOnXq5HkfmZmZsnXrVuncubPX10NDQ80EAAAQ0MFJm+fmzJlj+ivpWE6pqalmeXh4uJQuXdr83rt3b4mMjDRNbmrUqFFy4403Sr169eTYsWMyduxYMxxBv379/HkoAAAgCPg1OE2ZMsX8bNu2rcfyWbNmyQMPPGB+T05OlmLF/mhRPHr0qPTv39+ErPLly0vLli1l7dq10rBhw0IuPQAACDZ+b6rLjTbhZTVhwgQzAQAABGXncAAAgEBAcAIAALBEcAIAALBEcAIAACjI4HT11VfL4cOHL1iuwwPoawAAAEXRRQWnn3/+2Qw86e25cPv378+PcgEAAAT2cAQffvih+/dly5aZgSpdNEitXLlSateunb8lBAAACMTg1KNHD/MzJCRE4uLiLnhmnIamcePG5W8JAQAAAjE4nT9/3vzUZ8qtX79eKlWqVFDlAgAAKBojh+/Zsyf/SwIAAFBUH7mi/Zl0OnjwoLsmymXmzJn5UTYAAIDAD04jR46UUaNGSatWraRatWqmzxMAAEBRd1HBaerUqZKYmCj3339//pcIAACgKI3jdObMGYmNjc3/0gAAABS14NSvXz+ZM2dO/pcGAACgqDXVnT59WqZPny4rVqyQJk2amDGcsho/fnx+lQ8AACCwg9N3330nzZo1M79v27bN4zU6igMAgKLqooLTZ599lv8lAQAAKIp9nAAAAILRRdU4tWvXLscmuVWrVl1KmQAAAIpOcHL1b3I5e/asbNmyxfR3yv7wXwAAgKAOThMmTPC6/LnnnpP09PRLLRMAAEDR7+P0t7/9jefUAQCAIitfg9O6deskLCwsP3cJAAAQ2E11f/7znz3mHceRlJQU2bBhgzz77LP5VTYAAIDAr3EKDw/3mCpUqCBt27aVJUuWyIgRI6z3k5CQINddd52ULVtWqlSpIj169JCdO3fmut28efOkQYMGpnarcePG5n0BAAAuyxqnWbNm5cubf/755zJgwAATns6dOydPPfWU3HHHHfL999/LFVdc4XWbtWvXSq9evUzo6tq1q3lmngauTZs2SaNGjfKlXAAAAPkWnFw2btwoP/zwg/n92muvlebNm+dp+6VLl3rMJyYmmpon3e+tt97qdZtJkyZJp06dZNiwYWZ+9OjRsnz5cnn11Vdl6tSpF30sAAAABRKcDh48KPfcc48kJSXJVVddZZYdO3bMDIw5d+5cqVy58sXsVo4fP25+atNfTh3Qhw4d6rGsY8eOsnDhwot6TwAAgAINTo8++qicOHFCtm/fLjExMWaZNq/p4JePPfaYvPPOO3ne5/nz52Xw4MFy00035djklpqaKlWrVvVYpvO63JuMjAwzuaSlpeW5bAAAuCQnJ8uhQ4cC7oS4Wojgh+CkTWwrVqxwhybVsGFDmTx5sumjdDG0r5OOPL5mzRrJT9oXauTIkfm6TwBA8Iam6AYxcvrU7/4uCgIpOGntUMmSJS9Yrsv0tbwaOHCgLF68WFavXi01atTIcd2IiAg5cOCAxzKd1+XexMfHezTtaY1TVFRUnssIAIDWNGloqtj1cSlZMbC+S07t3iDHv5jt72IEZ3C67bbbZNCgQaZJrnr16mbZ/v37ZciQIXL77bdb70fHf9JmvwULFpj+UnXq1Ml1m9atW8vKlStNs56Ldg7X5d6EhoaaCQCA/KKhKTSiXkCd0LOH9/q7CME7jpPewaY1N7Vr15a6deuaSUOPLnvllVfy1Dw3e/ZsM6SAjuWk/ZR0OnXqlHud3r17m1ojFw1s2lQ4btw42bFjh3k+ng68qbVWAAAAl12NkzZ16bhJ2s9Jw4vS/k7t27fP036mTJlifurgmdnHiXrggQfc7cnFiv2R72JjY03QeuaZZ8y4T/Xr1zd31DGGEwAAuKyC06pVq0zNzldffSXlypWTDh06mMk1lICO5aRjKd1yyy3WTXW50Sa87Hr27GkmAACAy7apbuLEidK/f38TmrLTR6889NBDMn78+PwsHwAAQGAGp2+//daM2u2LDkWgo34DAABIsAcnve3f2zAELiVKlJDffvstP8oFAAAQ2MEpMjLSDFLpy3fffSfVqlXLj3IBAAAEdnDq3LmzPPvss3L69OkLXtMhBEaMGCFdu3bNz/IBAAAE5l11OgTA/Pnz5ZprrjF310VHR5vlOiSBPm4lMzNTnn766YIqKwAAQOAEJ32Y7tq1a+WRRx4xg1K6hhMICQmRjh07mvCU/QG8AAAAQTsAZq1atWTJkiVy9OhR2bVrlwlPOghl+fLlC6aEAAAAgTxyuNKgdN111+VvaQAAAIras+oAAACCEcEJAADAEsEJAADAEsEJAADAEsEJAADAEsEJAADAEsEJAADAEsEJAADAEsEJAADAEsEJAADAEsEJAADAEsEJAADAEsEJAADAEsEJAADAEsEJAACA4AQAAJC/qHECAAAIhOC0evVq6datm1SvXl1CQkJk4cKFOa6flJRk1ss+paamFlqZAQBA8PJrcDp58qQ0bdpUJk+enKftdu7cKSkpKe6pSpUqBVZGAAAAlxLiR3feeaeZ8kqD0lVXXVUgZQIAAChSfZyaNWsm1apVkw4dOsiXX36Z47oZGRmSlpbmMQEAABT54KRhaerUqfLBBx+YKSoqStq2bSubNm3yuU1CQoKEh4e7J90GAAAg4Jrq8io6OtpMLrGxsfLTTz/JhAkT5K233vK6TXx8vAwdOtQ9rzVOhCcAAFDkg5M3119/vaxZs8bn66GhoWYCAAAIqqY6b7Zs2WKa8AAAAIp0jVN6errs2rXLPb9nzx4ThCpUqCA1a9Y0zWz79++X//znP+b1iRMnSp06deTaa6+V06dPyxtvvCGrVq2STz/91I9HAQAAgoVfg9OGDRukXbt27nlXX6S4uDhJTEw0YzQlJye7Xz9z5ow8/vjjJkyVKVNGmjRpIitWrPDYBwAAQJEMTnpHnOM4Pl/X8JTVE088YSYAAAB/CPg+TgAAAIWF4AQAAGCJ4AQAAGCJ4AQAAGCJ4AQAAGCJ4AQAAGCJ4AQAAGCJ4AQAAGCJ4AQAAGCJ4AQAAGCJ4AQAAGCJ4AQAAGCJ4AQAAGCJ4AQAAGCJ4AQAAGCJ4AQAAGCJ4AQAAGCJ4AQAAGCJ4AQAAGCJ4AQAAGCJ4AQAAGCJ4AQAAGCJ4AQAAGCJ4AQAAGCJ4AQAABAIwWn16tXSrVs3qV69uoSEhMjChQtz3SYpKUlatGghoaGhUq9ePUlMTCyUsgIAAPg1OJ08eVKaNm0qkydPtlp/z5490qVLF2nXrp1s2bJFBg8eLP369ZNly5YVeFkBAABK+PMU3HnnnWayNXXqVKlTp46MGzfOzMfExMiaNWtkwoQJ0rFjxwIsKQAAgPg3OOXVunXrpH379h7LNDBpzZMvGRkZZnJJS0uTgpacnCyHDh2SQFSpUiWpWbOmv4sBAMBlKaCCU2pqqlStWtVjmc5rGDp16pSULl36gm0SEhJk5MiRhVZGDU3RDWLk9KnfJRCFlS4jO3f8QHgCACDQg9PFiI+Pl6FDh7rnNWRFRUUV2PtpTZOGpopdH5eSFQvufQrC2cN75fDiceYYqHUCACDAg1NERIQcOHDAY5nOlytXzmttk9K773QqbBqaQiPqFfr7AgCAghNQ4zi1bt1aVq5c6bFs+fLlZjkAAECRDk7p6elmWAGdXMMN6O/aT8jVzNa7d2/3+g8//LDs3r1bnnjiCdmxY4e89tpr8t5778mQIUP8dgwAACB4+DU4bdiwQZo3b24mpX2R9Pfhw4eb+ZSUFHeIUjoUwccff2xqmXT8Jx2W4I033mAoAgAAUPT7OLVt21Ycx/H5urdRwXWbzZs3F3DJAAAAAryPEwAAgD8RnAAAACwRnAAAACwRnAAAACwRnAAAACwRnAAAACwRnAAAACwRnAAAACwRnAAAACwRnAAAACwRnAAAACwRnAAAACwRnAAAACwRnAAAACwRnAAAACwRnAAAACwRnAAAACwRnAAAACwRnAAAACwRnAAAACwRnAAAACwRnAAAACwRnAAAACwRnAAAACwRnAAAAAIpOE2ePFlq164tYWFhcsMNN8g333zjc93ExEQJCQnxmHQ7AACAIh+c3n33XRk6dKiMGDFCNm3aJE2bNpWOHTvKwYMHfW5Trlw5SUlJcU+//PJLoZYZAAAEJ78Hp/Hjx0v//v2lT58+0rBhQ5k6daqUKVNGZs6c6XMbrWWKiIhwT1WrVi3UMgMAgODk1+B05swZ2bhxo7Rv3/6PAhUrZubXrVvnc7v09HSpVauWREVFSffu3WX79u0+183IyJC0tDSPCQAAIOCC06FDhyQzM/OCGiOdT01N9bpNdHS0qY1atGiRzJ49W86fPy+xsbGyb98+r+snJCRIeHi4e9KwBQAAEJBNdXnVunVr6d27tzRr1kzatGkj8+fPl8qVK8u0adO8rh8fHy/Hjx93T3v37i30MgMAgKKhhD/fvFKlSlK8eHE5cOCAx3Kd175LNkqWLCnNmzeXXbt2eX09NDTUTAAAAAFd41SqVClp2bKlrFy50r1Mm950XmuWbGhT39atW6VatWoFWFIAAAA/1zgpHYogLi5OWrVqJddff71MnDhRTp48ae6yU9osFxkZafoqqVGjRsmNN94o9erVk2PHjsnYsWPNcAT9+vXz85EAAICizu/B6e6775bffvtNhg8fbjqEa9+lpUuXujuMJycnmzvtXI4ePWqGL9B1y5cvb2qs1q5da4YyAAAAKNLBSQ0cONBM3iQlJXnMT5gwwUwAAACFLeDuqgMAAPAXghMAAIAlghMAAIAlghMAAIAlghMAAIAlghMAAIAlghMAAIAlghMAAIAlghMAAIAlghMAAIAlghMAAIAlghMAAIAlghMAAIAlghMAAIAlghMAAIAlghMAAIAlghMAAIAlghMAAIAlghMAAIAlghMAAIAlghMAAIAlghMAAIAlghMAAIAlghMAAIAlghMAAEAgBafJkydL7dq1JSwsTG644Qb55ptvclx/3rx50qBBA7N+48aNZcmSJYVWVgAAELz8HpzeffddGTp0qIwYMUI2bdokTZs2lY4dO8rBgwe9rr927Vrp1auX9O3bVzZv3iw9evQw07Zt2wq97AAAILj4PTiNHz9e+vfvL3369JGGDRvK1KlTpUyZMjJz5kyv60+aNEk6deokw4YNk5iYGBk9erS0aNFCXn311UIvOwAACC5+DU5nzpyRjRs3Svv27f8oULFiZn7dunVet9HlWddXWkPla30AAID8UkL86NChQ5KZmSlVq1b1WK7zO3bs8LpNamqq1/V1uTcZGRlmcjl+/Lj5mZaWJgUhPT39/943dZecP3NaAsnZI/vMTw2zruMIJBq6z58/L4GIsvvHzp07zU/+vRa+QP3MB/Rn5vDegP9+Sk9PL5Dvb9c+Hce5vINTYUhISJCRI0desDwqKqpA3/fossBtOnzwwQf9XQSgUPHvFcH0mQnksrdp06ZA93/ixAkJDw+/fINTpUqVpHjx4nLgwAGP5TofERHhdRtdnpf14+PjTedzF/0L58iRI1KxYkUJCQmRYKBJWoPi3r17pVy5cv4uDi4B17Lo4FoWDVzHokFrmjQ0Va9ePdd1/RqcSpUqJS1btpSVK1eaO+NcwUbnBw4c6HWb1q1bm9cHDx7sXrZ8+XKz3JvQ0FAzZXXVVVdJMNLQRHAqGriWRQfXsmjgOga+3GqaLpumOq0NiouLk1atWsn1118vEydOlJMnT5q77FTv3r0lMjLSNLmpQYMGmaq6cePGSZcuXWTu3LmyYcMGmT59up+PBAAAFHV+D0533323/PbbbzJ8+HDTwbtZs2aydOlSdwfw5ORk04nQJTY2VubMmSPPPPOMPPXUU1K/fn1ZuHChNGrUyI9HAQAAgoHfg5PSZjlfTXNJSUkXLOvZs6eZYEebKnWA0exNlgg8XMuig2tZNHAdg0+IY3PvHQAAAPw/cjgAAECgIDgBAABYIjgBAABYIjgVEZMnT5batWtLWFiY3HDDDfLNN9/4XPf111+XW265RcqXL28mffZfTuvj8r2WWenQHDqoq2tMNATetTx27JgMGDBAqlWrZjodX3PNNbJkyZJCKy/y5zrqsDrR0dFSunRpM/jwkCFD5PTpwHrECXKgncMR2ObOneuUKlXKmTlzprN9+3anf//+zlVXXeUcOHDA6/r33nuvM3nyZGfz5s3ODz/84DzwwANOeHi4s2/fvkIvOy7tWrrs2bPHiYyMdG655Rane/funNYAvJYZGRlOq1atnM6dOztr1qwx1zQpKcnZsmVLoZcdF38d3377bSc0NNT81Gu4bNkyp1q1as6QIUM4rUUEwakIuP76650BAwa45zMzM53q1as7CQkJVtufO3fOKVu2rPPmm28WYClRUNdSr19sbKzzxhtvOHFxcQSnAL2WU6ZMca6++mrnzJkzhVhK5Pd11HVvu+02j2VDhw51brrpJk52EUFTXYA7c+aMbNy40TS3ueiAoTq/bt06q338/vvvcvbsWalQoUIBlhQFdS1HjRolVapUkb59+3KSA/hafvjhh+bRUdpUpwMA66C+//u//yuZmZmFWHJc6nXUQZp1G1dz3u7du01za+fOnTm5RcRlMQAmLt6hQ4fMf6yukdZddH7Hjh1W+3jyySfNgw2z/ueAwLiWa9askRkzZsiWLVsKqZQoqGupX7CrVq2S++67z3zR7tq1S/7xj3+YP2p0AFsExnW89957zXY333yzeXDsuXPn5OGHHzZPukDRQI1TkBszZozpVLxgwQLT8RGBQ5/kff/995vO/pUqVfJ3cXCJ9AHnWnOoz93Uh5/r46iefvppmTp1Kuc2gOjTLrSm8LXXXpNNmzbJ/Pnz5eOPP5bRo0f7u2jIJ9Q4BTj9wixevLgcOHDAY7nOR0RE5Ljtyy+/bILTihUrpEmTJgVcUuT3tfzpp5/k559/lm7dunl8+aoSJUrIzp07pW7dupz4APl3qXfSlSxZ0mznEhMTY57hqU1GpUqVKvBy49Kv47PPPmv+oOnXr5+Zb9y4sXlw/YMPPmiCcNZnryIwcQUDnP5nqn+drly50uPLU+e1v4QvL730kvkLSB+o3KpVq0IqLfLzWjZo0EC2bt1qmulc05/+9Cdp166d+V1vg0bg/Lu86aabTPOcK/yq//73vyZQEZoC5zpqn9Hs4cgVhnnCWRHh797pyJ/bZfX218TEROf77793HnzwQXO7bGpqqnn9/vvvd/71r3+51x8zZoy5vfb99993UlJS3NOJEye4HAF2LbPjrrrAvZbJycnm7taBAwc6O3fudBYvXuxUqVLFef755/14FMjrdRwxYoS5ju+8846ze/du59NPP3Xq1q3r3HXXXZzMIoKmuiJA+0L89ttvMnz4cFOt36xZM1OT5OrQmJyc7PEX0JQpU0zV/1//+leP/WgH1Oeee67Qy4+Lv5YoOtdSawiXLVtmBkvUpvPIyEgZNGiQuXkDgXMdn3nmGTMQrf7cv3+/VK5c2TSnv/DCC348CuSnEE1P+bpHAACAIoo/XQEAACwRnAAAACwRnAAAACwRnAAAACwRnAAAACwRnAAAACwRnAAAACwRnAAAACwRnAAUGfrQYx21WZ/Vd7nuu23btjJ48GD3fO3atWXixImXXL4HHnhAevToccn7AZAzHrkCBCnXYyQ+/vhj87T38uXLS9OmTc0yfeDs5U6DwrFjx2ThwoUejy1JSUkxT7XPb/m17/nz50vJkiUlv02aNMnjIbIa0PTxIPkRygD8geAEBKm//OUv5pmFb775plx99dUmPOlT3w8fPiyBSp9CHxERcVnvu0KFCpKfMjMzTU1YeHh4vu4XgA/+fsowgMJ39OhRrZpwkpKScl2vb9++TqVKlcwT39u1a+ds2bLF40nwTZs2dWbMmOFERUU5V1xxhfPII484586dc1588UWnatWqTuXKlZ3nn3/eY7/jxo1zGjVq5JQpU8apUaOG2ebEiRPu12fNmuWEh4c7S5cudRo0aGD227FjR+fXX391v6+WP+v02WefOXv27DG/b9682b2vbdu2OV26dDHlv/LKK52bb77Z2bVrl9fjPXLkiHPvvfea4w0LC3Pq1avnzJw507yWfd/6fjqvZWzWrJlZX8/PgQMHnCVLlphy63v26tXLOXnypPs92rRp4wwaNMg9X6tWLWfChAl5PjeLFi1yYmJinOLFi5uyxcXFOd27dzfr6O/Zz8/u3budunXrOmPHjvU4Zj0eff3HH3/M8bMA4P/QxwkIQldeeaWZtJkrIyPD53o9e/aUgwcPyieffCIbN26UFi1ayO233y5Hjhxxr/PTTz+Z1/WJ8e+8847MmDFDunTpIvv27ZPPP/9cXnzxRfOk+K+//tq9jT5N/t///rds377d1HitWrVKnnjiCY/3/v333+Xll1+Wt956S1avXm2eQv/Pf/7TvKY/77rrLunUqZNpPtMpNjb2gvLr0+lvvfVWCQ0NNe+hx/D3v/9dzp075/V4n332Wfn+++/N8fzwww8yZcqUXJvmnnvuOXn11Vdl7dq1snfvXlMubR6bM2eOaQb99NNP5ZVXXhFbtudGz+sbb7xh1qtSpcoFzXatW7eW/v37u89PzZo1zbHPmjXLY12d13NUr1496zICQe3/BygAQeb99993ypcvb2pKYmNjnfj4eOfbb791v/7FF1845cqVc06fPu2xndZaTJs2zV3zozUjaWlp7te1Zqh27dpOZmame1l0dLSTkJDgsyzz5s1zKlas6FGrov89Za0Zmjx5sqnBcslaw+KSvVZIj6lOnTrOmTNnrM5Jt27dnD59+nh9zVeN04oVK9zr6DHqsp9++sm97KGHHjLnxLbGyfbcZK3583Y+sr+P2r9/v6mh+vrrr828nhetXUtMTMzlzABwocYJCOI+Tr/++qt8+OGHpuYmKSnJ1CglJiaa17/99ltJT0+XihUrumuodNqzZ4+pZcp6V1jZsmXd81WrVpWGDRuampOsy7TmymXFihWm5ioyMtJse//995u+VVqT4lKmTBmpW7eue75atWoe+7Chd8Ddcsst1p2xH3nkEZk7d67pVK21PFqLlJsmTZp4HKeWW/uMZV2Wl3LbnJtSpUp5vK+t6tWrm9rAmTNnmvmPPvrI1DhqzSIAOwQnIIiFhYVJhw4dTBOVhgS9U23EiBHmNQ1NGlY0fGSddu7cKcOGDXPvI3so0Y7K3padP3/efVt/165dzRf/Bx98YJrPJk+ebF7Tzuo57TfrXWM2Spcunaf177zzTvnll19kyJAhJlRqgHE1D/qStZy5HXtubM+NHpfu92L069fPhMNTp06ZZrq7777bhD0AdrirDoCb1hS5bu/X2qfU1FQpUaKEqVXKLxoGNEiMGzfOXSv13nvv5Xk/Wuuid5TlRAOI9hM6e/asda1T5cqVJS4uzkxaW6UhUftaFYb8Ojc5nZ/OnTvLFVdcYfpvab807T8GwB41TkAQ0qaf2267TWbPni3fffedaX6bN2+evPTSS9K9e3ezTvv27U0HYx1UUTs4a22I1ko9/fTTsmHDhot+b+2ErEFGO0zv3r3bdP6eOnVqnvejYU7LrjVghw4dMvvMbuDAgZKWlib33HOPKfOPP/5o3k+38UbHsFq0aJHs2rXLdLpevHixxMTESGHJr3PjOj/aIV+vm54fV62XDqugNYvx8fFSv359c40B2CM4AUFI+yrdcMMNMmHCBHNHVaNGjUxznd6FpXeIKW0KWrJkiXm9T58+cs0115gAok1Z2m/nYukgm+PHjzd3hen7vv3225KQkJDn/WhZo6OjpVWrVqaW6Msvv7xgHe2fpXelabNjmzZtpGXLlvL666/7rH3SWhoNFFpTpcetIUObtQpLfp0bpU2MWn6tRdTzo3cluvTt29c0/el1BZA3IdpDPI/bAAAC2BdffGH6b+nwCZcSgoFgRHACgCChd9Dpo3a0/5aOgq41WgDyhqY6AAgSOkBprVq1zDP+tD8bgLyjxgkAAMASNU4AAACWCE4AAACWCE4AAACWCE4AAACWCE4AAACWCE4AAACWCE4AAACWCE4AAACWCE4AAABi5/8Bqukh1jxLGhoAAAAASUVORK5CYII="/>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=bda5ca76">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="Note-(section-level-metrics)">Note (section-level metrics)<a class="anchor-link" href="#Note-(section-level-metrics)">¶</a></h2><p>This notebook does <strong>not</strong> compute <strong>Precision / Recall at the <code>FR-*</code> section level</strong>; that requires chunk metadata tagged with requirement IDs. If you maintain those spans elsewhere, use the dedicated evaluation track for section-level P@R.</p>
 </div>
 </div>
 </div>
 </div>
 </main>
 </body>
+<script type="application/vnd.jupyter.widget-state+json">
+{"state": {"18687471ce034e20bfe51991f20ecc8b": {"model_module": "@jupyter-widgets\/base", "model_module_version": "2.0.0", "model_name": "LayoutModel", "state": {"_model_module": "@jupyter-widgets\/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets\/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "1ee398453b3f4ca69bba6a3491317b98": {"model_module": "@jupyter-widgets\/controls", "model_module_version": "2.0.0", "model_name": "HTMLModel", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets\/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets\/controls", "_view_module_version": "2.0.0", "_view_name": "HTMLView", "description": "", "description_allow_html": false, "layout": "IPY_MODEL_228a2294fe1f4e8b83b8eb9313eccbcb", "placeholder": "\u200b", "style": "IPY_MODEL_56b4271e919e451080b026b82ed91f31", "tabbable": null, "tooltip": null, "value": "Evaluating:\u2007100%"}}, "228a2294fe1f4e8b83b8eb9313eccbcb": {"model_module": "@jupyter-widgets\/base", "model_module_version": "2.0.0", "model_name": "LayoutModel", "state": {"_model_module": "@jupyter-widgets\/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets\/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "56b4271e919e451080b026b82ed91f31": {"model_module": "@jupyter-widgets\/controls", "model_module_version": "2.0.0", "model_name": "HTMLStyleModel", "state": {"_model_module": "@jupyter-widgets\/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets\/base", "_view_module_version": "2.0.0", "_view_name": "StyleView", "background": null, "description_width": "", "font_size": null, "text_color": null}}, "5c348bf3e11144b696e7f12eba818adc": {"model_module": "@jupyter-widgets\/controls", "model_module_version": "2.0.0", "model_name": "FloatProgressModel", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets\/controls", "_model_module_version": "2.0.0", "_model_name": "FloatProgressModel", "_view_count": null, "_view_module": "@jupyter-widgets\/controls", "_view_module_version": "2.0.0", "_view_name": "ProgressView", "bar_style": "success", "description": "", "description_allow_html": false, "layout": "IPY_MODEL_c0d2d40e638443d88383533b2e05c035", "max": 80, "min": 0, "orientation": "horizontal", "style": "IPY_MODEL_7259098262c74b4aaf90e0d6a63944dc", "tabbable": null, "tooltip": null, "value": 80}}, "629f22b1bc684efa9ee43875142b7212": {"model_module": "@jupyter-widgets\/base", "model_module_version": "2.0.0", "model_name": "LayoutModel", "state": {"_model_module": "@jupyter-widgets\/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets\/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "65dd2e4a636a42348d02e25932ea9648": {"model_module": "@jupyter-widgets\/controls", "model_module_version": "2.0.0", "model_name": "HBoxModel", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets\/controls", "_model_module_version": "2.0.0", "_model_name": "HBoxModel", "_view_count": null, "_view_module": "@jupyter-widgets\/controls", "_view_module_version": "2.0.0", "_view_name": "HBoxView", "box_style": "", "children": ["IPY_MODEL_1ee398453b3f4ca69bba6a3491317b98", "IPY_MODEL_5c348bf3e11144b696e7f12eba818adc", "IPY_MODEL_df454712dbd74682a3593b915d310d4e"], "layout": "IPY_MODEL_629f22b1bc684efa9ee43875142b7212", "tabbable": null, "tooltip": null}}, "7259098262c74b4aaf90e0d6a63944dc": {"model_module": "@jupyter-widgets\/controls", "model_module_version": "2.0.0", "model_name": "ProgressStyleModel", "state": {"_model_module": "@jupyter-widgets\/controls", "_model_module_version": "2.0.0", "_model_name": "ProgressStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets\/base", "_view_module_version": "2.0.0", "_view_name": "StyleView", "bar_color": null, "description_width": ""}}, "c0d2d40e638443d88383533b2e05c035": {"model_module": "@jupyter-widgets\/base", "model_module_version": "2.0.0", "model_name": "LayoutModel", "state": {"_model_module": "@jupyter-widgets\/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets\/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "df454712dbd74682a3593b915d310d4e": {"model_module": "@jupyter-widgets\/controls", "model_module_version": "2.0.0", "model_name": "HTMLModel", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets\/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets\/controls", "_view_module_version": "2.0.0", "_view_name": "HTMLView", "description": "", "description_allow_html": false, "layout": "IPY_MODEL_18687471ce034e20bfe51991f20ecc8b", "placeholder": "\u200b", "style": "IPY_MODEL_f6842a08bcc045b180087427562ddbdc", "tabbable": null, "tooltip": null, "value": "\u200780\/80\u2007[43:21&lt;00:00,\u20072601.70s\/it]"}}, "f6842a08bcc045b180087427562ddbdc": {"model_module": "@jupyter-widgets\/controls", "model_module_version": "2.0.0", "model_name": "HTMLStyleModel", "state": {"_model_module": "@jupyter-widgets\/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets\/base", "_view_module_version": "2.0.0", "_view_name": "StyleView", "background": null, "description_width": "", "font_size": null, "text_color": null}}}, "version_major": 2, "version_minor": 0}
+</script>
 </html>

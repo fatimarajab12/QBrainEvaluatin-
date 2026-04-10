@@ -1,4 +1,8 @@
-"""Vector index adapter: FAISS + embeddings."""
+"""Vector index adapter: FAISS + embeddings.
+
+By default the lab builds indexes **in memory** only. To clear optional on-disk caches, run
+``python scripts/clear_vector_cache.py`` (removes ``data/faiss_cache/`` and LangChain ``index.faiss`` folders).
+"""
 from __future__ import annotations
 
 from pathlib import Path
@@ -94,3 +98,59 @@ def retrieve_top_k(store: FAISS, query: str, k: int | None = None) -> list[Docum
     if k is None:
         k = get_settings().default_top_k
     return store.similarity_search(query, k=k)
+
+
+def retrieve_top_k_for_source_files(
+    store: FAISS,
+    query: str,
+    allowed_source_files: set[str] | list[str],
+    k: int | None = None,
+    *,
+    fetch_multiplier: int = 12,
+    max_fetch_cap: int | None = None,
+) -> list[Document]:
+    """
+    Top-``k`` similarity search restricted to documents whose metadata ``source_file`` is in
+    ``allowed_source_files``. FAISS has no native metadata filter, so we over-fetch globally
+    then keep the first ``k`` hits that match (same idea as a single-SRS sub-index).
+
+    **Widening:** A single small global window (e.g. ``k * 12``) often misses every chunk from
+    the allowed file when many other PDFs share the index—the top vectors are all from other
+    sources. This function **doubles** the fetch window until it collects ``k`` allowed hits or
+    the whole index has been searched.
+
+    If too few matches exist at all (or ``max_fetch_cap`` stops widening), returns as many as
+    were found (may be fewer than ``k``).
+    """
+    from qbrain_rag.config.settings import get_settings
+
+    if k is None:
+        k = get_settings().default_top_k
+    allowed = {str(x) for x in allowed_source_files}
+    total = indexed_document_count(store)
+    mult = max(2, int(fetch_multiplier))
+    fetch_k = min(total, max(k * mult, k + 1))
+    if max_fetch_cap is not None:
+        fetch_k = min(fetch_k, int(max_fetch_cap))
+
+    while True:
+        ranked = store.similarity_search(query, k=fetch_k)
+        out = []
+        for doc in ranked:
+            name = doc.metadata.get("source_file")
+            if name is None:
+                continue
+            if str(name) in allowed:
+                out.append(doc)
+            if len(out) >= k:
+                break
+        if len(out) >= k or fetch_k >= total:
+            return out[:k]
+        if max_fetch_cap is not None and fetch_k >= int(max_fetch_cap):
+            return out[:k]
+        next_fetch = min(total, max(fetch_k * 2, fetch_k + 1))
+        if max_fetch_cap is not None:
+            next_fetch = min(next_fetch, int(max_fetch_cap))
+        if next_fetch <= fetch_k:
+            return out[:k]
+        fetch_k = next_fetch

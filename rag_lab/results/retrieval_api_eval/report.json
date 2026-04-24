@@ -1,0 +1,738 @@
+{
+  "config": {
+    "base_url": "http://127.0.0.1:8001/api/v1",
+    "ground_truth": "data\\ground_truth\\retrieval_user2\\retrieval_ground_truth_final_qdesign.json",
+    "srs_dir": "data\\srs",
+    "k": 5,
+    "mode": "unified_project"
+  },
+  "summary": {
+    "queries": 60,
+    "hit@k": 1.0,
+    "precision@k": 0.2,
+    "recall@k": 1.0,
+    "mrr": 1.0
+  },
+  "per_query": [
+    {
+      "question_id": "ERTMS_1",
+      "question": "According to the ERTMS document, what does this document define?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_f97dbae971244f98901bc44bf074b54e.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_f97dbae971244f98901bc44bf074b54e.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "ERTMS_2",
+      "question": "According to the ERTMS document requirements notation, what does (M) mean?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_f97dbae971244f98901bc44bf074b54e.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_f97dbae971244f98901bc44bf074b54e.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "ERTMS_3",
+      "question": "According to the ERTMS document requirements notation, what does (O) mean?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_f97dbae971244f98901bc44bf074b54e.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_f97dbae971244f98901bc44bf074b54e.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "ERTMS_4",
+      "question": "According to the ERTMS requirements, what information shall ETCS provide the driver with?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_f97dbae971244f98901bc44bf074b54e.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_f97dbae971244f98901bc44bf074b54e.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "ERTMS_5",
+      "question": "According to the ERTMS requirements, which movements shall ETCS supervise?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_f97dbae971244f98901bc44bf074b54e.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_f97dbae971244f98901bc44bf074b54e.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "ERTMS_6",
+      "question": "According to the ERTMS requirements, what is the maximum train speed for which ETCS shall be functional?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_f97dbae971244f98901bc44bf074b54e.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_f97dbae971244f98901bc44bf074b54e.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "ERTMS_7",
+      "question": "According to the ETCS application levels in the ERTMS document, how is Level 1 defined?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_f97dbae971244f98901bc44bf074b54e.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_f97dbae971244f98901bc44bf074b54e.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "ERTMS_8",
+      "question": "According to the ETCS application levels in the ERTMS document, how is Level 2 defined?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_f97dbae971244f98901bc44bf074b54e.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_f97dbae971244f98901bc44bf074b54e.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "ERTMS_9",
+      "question": "According to the ERTMS level-transition rule, what shall happen if the driver does not acknowledge after the transition?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_f97dbae971244f98901bc44bf074b54e.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_f97dbae971244f98901bc44bf074b54e.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "ERTMS_10",
+      "question": "According to the ERTMS requirements, with which systems shall ETCS be compatible?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_f97dbae971244f98901bc44bf074b54e.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_f97dbae971244f98901bc44bf074b54e.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "ERTMS_11",
+      "question": "According to the ERTMS transition requirements, what shall ETCS do if the driver fails to acknowledge a required transition?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_f97dbae971244f98901bc44bf074b54e.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_f97dbae971244f98901bc44bf074b54e.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "ERTMS_12",
+      "question": "According to the ERTMS DMI requirements, what shall be indicated to the driver on the DMI?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_f97dbae971244f98901bc44bf074b54e.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_f97dbae971244f98901bc44bf074b54e.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "KEEPASS_1",
+      "question": "According to the KeePass document, what is the stated purpose of KeePass Password Safe?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_c90c8d8db604465ab9a505ceca866a02.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_c90c8d8db604465ab9a505ceca866a02.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "KEEPASS_2",
+      "question": "According to the KeePass document, what user problem does the system solve?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_c90c8d8db604465ab9a505ceca866a02.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_c90c8d8db604465ab9a505ceca866a02.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "KEEPASS_3",
+      "question": "According to the KeePass document, how is the system size/portability described?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_c90c8d8db604465ab9a505ceca866a02.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_c90c8d8db604465ab9a505ceca866a02.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "KEEPASS_4",
+      "question": "According to the KeePass document, how is the produced database protected?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_c90c8d8db604465ab9a505ceca866a02.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_c90c8d8db604465ab9a505ceca866a02.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "KEEPASS_5",
+      "question": "According to the KeePass document, what happens if the Master Password and/or key file are lost?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_c90c8d8db604465ab9a505ceca866a02.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_c90c8d8db604465ab9a505ceca866a02.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "KEEPASS_6",
+      "question": "According to the KeePass document, how are user data organized?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_c90c8d8db604465ab9a505ceca866a02.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_c90c8d8db604465ab9a505ceca866a02.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "KEEPASS_7",
+      "question": "According to the KeePass document, what is the Composite Master Key?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_c90c8d8db604465ab9a505ceca866a02.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_c90c8d8db604465ab9a505ceca866a02.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "KEEPASS_8",
+      "question": "According to the KeePass document, which database functions are listed?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_c90c8d8db604465ab9a505ceca866a02.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_c90c8d8db604465ab9a505ceca866a02.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "KEEPASS_9",
+      "question": "According to the KeePass document, how long does a copied password remain in memory?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_c90c8d8db604465ab9a505ceca866a02.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_c90c8d8db604465ab9a505ceca866a02.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "KEEPASS_10",
+      "question": "According to the KeePass document, which two encryption algorithms are used to protect user data?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_c90c8d8db604465ab9a505ceca866a02.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_c90c8d8db604465ab9a505ceca866a02.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "KEEPASS_11",
+      "question": "According to the KeePass document, which hash algorithm is used for creating the 256-bit key?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_c90c8d8db604465ab9a505ceca866a02.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_c90c8d8db604465ab9a505ceca866a02.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "KEEPASS_12",
+      "question": "According to the KeePass document, what is required to unlock the workspace when it is locked?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_c90c8d8db604465ab9a505ceca866a02.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_c90c8d8db604465ab9a505ceca866a02.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "INV_1",
+      "question": "According to the Inventory document, what is the purpose of this document?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_d56f19f7a2a04ebbb89016858962d6ee.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_d56f19f7a2a04ebbb89016858962d6ee.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "INV_2",
+      "question": "According to the Inventory document, what is the scope of the Inventory Management project?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_d56f19f7a2a04ebbb89016858962d6ee.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_d56f19f7a2a04ebbb89016858962d6ee.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "INV_3",
+      "question": "According to the Inventory document, what is the Inventory Management System designed to allow staff to do?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_d56f19f7a2a04ebbb89016858962d6ee.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_d56f19f7a2a04ebbb89016858962d6ee.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "INV_4",
+      "question": "According to the Inventory document, which receiving processes into inventory are facilitated?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_d56f19f7a2a04ebbb89016858962d6ee.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_d56f19f7a2a04ebbb89016858962d6ee.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "INV_5",
+      "question": "According to the Inventory document roles, who is an Administrator?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_d56f19f7a2a04ebbb89016858962d6ee.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_d56f19f7a2a04ebbb89016858962d6ee.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "INV_6",
+      "question": "According to the Inventory document roles, who is a Manager?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_d56f19f7a2a04ebbb89016858962d6ee.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_d56f19f7a2a04ebbb89016858962d6ee.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "INV_7",
+      "question": "According to the Inventory document roles, who is a Donor?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_d56f19f7a2a04ebbb89016858962d6ee.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_d56f19f7a2a04ebbb89016858962d6ee.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "INV_8",
+      "question": "According to the Inventory document roles, who is a Buyer?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_d56f19f7a2a04ebbb89016858962d6ee.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_d56f19f7a2a04ebbb89016858962d6ee.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "INV_9",
+      "question": "According to the Inventory document, what is the pre-condition before viewing inventory?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_d56f19f7a2a04ebbb89016858962d6ee.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_d56f19f7a2a04ebbb89016858962d6ee.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "INV_10",
+      "question": "According to the Inventory document flow, what does the system display after the user accesses the main inventory screen?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_d56f19f7a2a04ebbb89016858962d6ee.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_d56f19f7a2a04ebbb89016858962d6ee.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "INV_11",
+      "question": "According to the Inventory document flow, what does the system display after the user clicks a department cell?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_d56f19f7a2a04ebbb89016858962d6ee.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_d56f19f7a2a04ebbb89016858962d6ee.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "INV_12",
+      "question": "According to the Inventory document flow, what does the system display when the user clicks an item in the items list?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_d56f19f7a2a04ebbb89016858962d6ee.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_d56f19f7a2a04ebbb89016858962d6ee.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "GPARTED_1",
+      "question": "According to the GParted document, what is the purpose of this document?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_8ece2fa0136e457d9bac7e81590f7a42.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_8ece2fa0136e457d9bac7e81590f7a42.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "GPARTED_2",
+      "question": "According to the GParted document, how is GParted defined?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_8ece2fa0136e457d9bac7e81590f7a42.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_8ece2fa0136e457d9bac7e81590f7a42.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "GPARTED_3",
+      "question": "According to the GParted document, what is GParted otherwise known as?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_8ece2fa0136e457d9bac7e81590f7a42.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_8ece2fa0136e457d9bac7e81590f7a42.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "GPARTED_4",
+      "question": "According to the GParted document, what does it mean that GParted is a LiveCD application?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_8ece2fa0136e457d9bac7e81590f7a42.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_8ece2fa0136e457d9bac7e81590f7a42.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "GPARTED_5",
+      "question": "According to the GParted document, what partition operations is GParted used for?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_8ece2fa0136e457d9bac7e81590f7a42.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_8ece2fa0136e457d9bac7e81590f7a42.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "GPARTED_6",
+      "question": "According to the GParted document, what tasks is GParted useful for?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_8ece2fa0136e457d9bac7e81590f7a42.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_8ece2fa0136e457d9bac7e81590f7a42.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "GPARTED_7",
+      "question": "According to the GParted document, what backend does GParted use?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_8ece2fa0136e457d9bac7e81590f7a42.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_8ece2fa0136e457d9bac7e81590f7a42.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "GPARTED_8",
+      "question": "According to the GParted document, what does GParted use to detect and manipulate devices and partition tables?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_8ece2fa0136e457d9bac7e81590f7a42.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_8ece2fa0136e457d9bac7e81590f7a42.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "GPARTED_9",
+      "question": "According to the GParted document, what toolkit is listed for creating GUIs?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_8ece2fa0136e457d9bac7e81590f7a42.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_8ece2fa0136e457d9bac7e81590f7a42.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "GPARTED_10",
+      "question": "According to the GParted document, which file systems are listed as supported?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_8ece2fa0136e457d9bac7e81590f7a42.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_8ece2fa0136e457d9bac7e81590f7a42.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "GPARTED_11",
+      "question": "According to the GParted document, on which operating system is GParted based?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_8ece2fa0136e457d9bac7e81590f7a42.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_8ece2fa0136e457d9bac7e81590f7a42.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "GPARTED_12",
+      "question": "According to the GParted document, what is needed to use the Live version of GParted?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_8ece2fa0136e457d9bac7e81590f7a42.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_8ece2fa0136e457d9bac7e81590f7a42.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "JDECO_1",
+      "question": "According to the JDECo SRS document, what is the purpose of this document?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_96c2d11efe0c44c89f15d857681cacf6.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_96c2d11efe0c44c89f15d857681cacf6.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "JDECO_2",
+      "question": "According to the JDECo SRS document, how is JDECo-SMS defined?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_96c2d11efe0c44c89f15d857681cacf6.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_96c2d11efe0c44c89f15d857681cacf6.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "JDECO_3",
+      "question": "According to the JDECo SRS document, with what other systems can this system integrate?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_96c2d11efe0c44c89f15d857681cacf6.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_96c2d11efe0c44c89f15d857681cacf6.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "JDECO_4",
+      "question": "According to the JDECo SRS document, what important feature involves customers?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_96c2d11efe0c44c89f15d857681cacf6.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_96c2d11efe0c44c89f15d857681cacf6.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "JDECO_5",
+      "question": "According to the JDECo SRS document, how can the customer log in to the system?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_96c2d11efe0c44c89f15d857681cacf6.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_96c2d11efe0c44c89f15d857681cacf6.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "JDECO_6",
+      "question": "According to the JDECo SRS document, what can the customer view in the system?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_96c2d11efe0c44c89f15d857681cacf6.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_96c2d11efe0c44c89f15d857681cacf6.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "JDECO_7",
+      "question": "According to the JDECo SRS document, how can the system notify the customer?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_96c2d11efe0c44c89f15d857681cacf6.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_96c2d11efe0c44c89f15d857681cacf6.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "JDECO_8",
+      "question": "According to the JDECo SRS document, what customer-facing outcomes are increased?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_96c2d11efe0c44c89f15d857681cacf6.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_96c2d11efe0c44c89f15d857681cacf6.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "JDECO_9",
+      "question": "According to the JDECo SRS product perspective section, how is the product described?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_96c2d11efe0c44c89f15d857681cacf6.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_96c2d11efe0c44c89f15d857681cacf6.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "JDECO_10",
+      "question": "According to the JDECo SRS document, how is JDECo-SMS described regarding integration?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_96c2d11efe0c44c89f15d857681cacf6.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_96c2d11efe0c44c89f15d857681cacf6.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "JDECO_11",
+      "question": "According to the JDECo SRS document, what is required to access the product?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_96c2d11efe0c44c89f15d857681cacf6.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_96c2d11efe0c44c89f15d857681cacf6.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    },
+    {
+      "question_id": "JDECO_12",
+      "question": "According to the JDECo SRS document, what shall JDECo enable if connection is broken before a request is confirmed or canceled?",
+      "relevant_file": "6d0b7e05-d2c3-4c67-9936-90e48dede73e_96c2d11efe0c44c89f15d857681cacf6.pdf",
+      "ranked_files": [
+        "6d0b7e05-d2c3-4c67-9936-90e48dede73e_96c2d11efe0c44c89f15d857681cacf6.pdf"
+      ],
+      "hit@k": 1.0,
+      "precision@k": 0.2,
+      "recall@k": 1.0,
+      "rr": 1.0
+    }
+  ]
+}

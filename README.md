@@ -1,206 +1,321 @@
 ﻿# QBrain RAG Lab
 
-`QBrain/rag_lab` is the research and evaluation workspace for a Retrieval-Augmented Generation (RAG) pipeline built on System Requirements Specification (SRS) documents.
-The repository evaluates how effectively SRS text can be converted into grounded QA outputs using retrieval, generation, and benchmark analysis.
+`rag_lab` is an API-first Retrieval-Augmented Generation (RAG) system focused on SRS (Software Requirements Specification) documents.
+It is designed for:
 
-## What’s included
+- document upload and project-scoped vector indexing
+- retrieval quality evaluation
+- feature extraction from indexed knowledge
+- test case generation from extracted features
+- notebook-based experimentation and reporting
 
-- Document ingestion and chunking
-- Embedding generation and FAISS vector indexing
-- Retrieval of top-k relevant chunks
-- Grounded answer generation with OpenAI
-- Structured benchmark evaluation and diagnostics
-- Notebook-driven analysis and reports
+---
 
-## Repository layout
+## Table of Contents
+
+- [1. Technology Stack](#1-technology-stack)
+- [2. Architecture and Code Organization](#2-architecture-and-code-organization)
+- [3. End-to-End Workflow](#3-end-to-end-workflow)
+- [4. Environment and Setup](#4-environment-and-setup)
+- [5. Supabase Setup](#5-supabase-setup)
+- [6. Running the API](#6-running-the-api)
+- [7. API Usage Guide](#7-api-usage-guide)
+- [8. Evaluation Guide](#8-evaluation-guide)
+- [9. Metrics Explained](#9-metrics-explained)
+- [10. Data and File Conventions](#10-data-and-file-conventions)
+- [11. Troubleshooting](#11-troubleshooting)
+
+---
+
+## 1. Technology Stack
+
+- **Language**: Python 3.11+
+- **API framework**: FastAPI
+- **ASGI server**: Uvicorn
+- **Data validation**: Pydantic
+- **LLM and embeddings**: OpenAI APIs
+- **Persistence and vector DB**: Supabase
+- **Interactive analysis**: Jupyter Notebook
+
+### Core persistence tables (Supabase)
+
+- `projects`
+- `project_vectors`
+- `features`
+- `test_cases`
+- optional related metrics tables used by API services
+
+---
+
+## 2. Architecture and Code Organization
 
 ```text
-QBrain/rag_lab/
-├── pyproject.toml
-├── requirements.txt
-├── .env
-├── src/qbrain_rag/
+rag_lab/
+├── src/
+│   ├── api/
+│   │   ├── main.py
+│   │   ├── routes/
+│   │   ├── routes/schemes/
+│   │   ├── controllers/
+│   │   ├── services/
+│   │   └── repositories/
 │   ├── application/
-│   ├── config/
 │   ├── infrastructure/
+│   ├── config/
 │   └── services/
-├── scripts/
-│   ├── clear_vector_cache.py
-│   ├── generate_rag_benchmark_report.py
-│   ├── run_document_pipeline.py
-│   ├── run_document_pipeline_batch.py
-│   ├── run_ingestion.py
-│   ├── run_rag_benchmark.py
-│   ├── run_retrieval.py
-│   └── verify_rag_index.py
-├── notebooks/
-│   ├── 01_rag_stage1_ingestion.executed.ipynb
-│   ├── 02_rag_stage2_indexing.executed.ipynb
-│   ├── 03_rag_stage3_retrieval.ipynb
-│   ├── 04_rag_stage4_creation_features_tests.ipynb
-│   ├── 10_rag_ragas_evaluation.ipynb
-│   ├── 10_rag_ragas_evaluation.html
-│   ├── 12_rag_benchmark_results_dashboard.executed.ipynb
-│   └── 12_rag_benchmark_results_dashboard.executed.html
 ├── data/
-│   ├── faiss_cache/
-│   ├── ground_truth/
-│   ├── outputs/
-│   └── srs/
-└── results/
-    ├── figures/
-    └── pipeline_runs/
+│   ├── srs/
+│   ├── srs/uploads/
+│   └── ground_truth/
+├── scripts/
+├── notebooks/
+├── supabase_setup.sql
+├── requirements.txt
+└── pyproject.toml
 ```
 
-## Setup
+### Layer responsibilities
+
+- `src/api/routes/`: HTTP endpoint definitions and request routing
+- `src/api/routes/schemes/`: request/response models
+- `src/api/controllers/`: thin endpoint orchestration
+- `src/api/services/`: use-case/business logic
+- `src/api/repositories/`: low-level Supabase operations
+- `src/application/`: domain pipelines (chunking, extraction, evaluation logic)
+- `src/infrastructure/`: OpenAI, embedding generation, vector retrieval integrations
+- `src/config/`: runtime settings and defaults
+
+---
+
+## 3. End-to-End Workflow
+
+### Step 1: Create project
+Create a project entity in Supabase:
+
+- `POST /api/v1/projects/`
+
+### Step 2: Upload SRS and build knowledge source
+Upload one document to a project:
+
+- `POST /api/v1/projects/{project_id}/upload-srs`
+
+Current behavior:
+- accepts form-data key `srs` (or `file`)
+- stores uploaded runtime copy under `data/srs/uploads/`
+- updates project `doc_path`
+- parses and chunks text
+- computes embeddings
+- inserts vectors into `project_vectors` (scoped by `project_id`)
+
+### Step 3: Retrieval
+Retrieve relevant chunks for a query:
+
+- `POST /api/v1/projects/{project_id}/retrieval`
+
+Request example:
+
+```json
+{
+  "query": "What is the system purpose?",
+  "k": 5
+}
+```
+
+### Step 4: Feature generation
+Generate features from indexed document knowledge:
+
+- `POST /api/v1/features/projects/{project_id}/generate-features`
+
+### Step 5: Test case generation
+Generate test cases from selected features:
+
+- `POST /api/v1/test-cases/features/{feature_id}/generate-test-cases`
+
+---
+
+## 4. Environment and Setup
+
+From `D:\Qbrainpython\rag_lab`:
 
 ```powershell
-cd D:\Qbrainpython\QBrain\rag_lab
 python -m venv .venv
 .\.venv\Scripts\activate
 pip install -U pip
 pip install -r requirements.txt
 ```
 
-Create a `.env` file in `rag_lab` with at least:
+Create `.env` in `rag_lab`:
 
 ```text
 OPENAI_API_KEY=your_api_key_here
+USE_SUPABASE=true
+SUPABASE_URL=your_supabase_url
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+SUPABASE_SRS_BUCKET=srs-files
 ```
 
-Optional values:
+Optional settings:
 
-- `OPENAI_MODEL` (default: `gpt-4o-mini`)
-- `RAG_TOP_K` (default: `5`)
+- `OPENAI_MODEL`
+- `RAG_TOP_K`
 - `GENERATION_TEMPERATURE`
+- any configuration available in `src/config/settings.py`
 
-## Core workflow
+---
 
-1. Ingest SRS documents from `data/srs/`
-2. Chunk text with overlap
-3. Embed chunks and store them in a FAISS index
-4. Retrieve top-k chunks for a question
-5. Generate a grounded answer using retrieved context
-6. Evaluate retrieval, generation, and end-to-end metrics
+## 5. Supabase Setup
 
-## Pipeline details
+1. Open Supabase SQL Editor.
+2. Run `supabase_setup.sql`.
+3. Ensure storage bucket exists (`srs-files` by default).
+4. Confirm `.env` points to the same project.
 
-- The pipeline starts by loading SRS documents from `data/srs/`.
-- The document text is split into overlapping chunks to preserve context during retrieval.
-- Each chunk is converted into an embedding using an OpenAI embedding model.
-- Embeddings are stored in a FAISS index for fast similarity search.
-- When a question is received, the question is embedded and the most relevant chunks are retrieved.
-- The retrieved chunks are used as reference context to generate an answer with OpenAI.
-- The final output is evaluated for retrieval quality, generation quality, and end-to-end success.
+If Supabase credentials are invalid or missing, all project/vector operations fail.
 
-## Data and outputs
+---
+
+## 6. Running the API
+
+From `D:\Qbrainpython\rag_lab`:
 
 ```powershell
-# Preview ingestion for a document
-python scripts/run_ingestion.py data/srs/your_file.pdf
-
-# Run retrieval for a question
-python scripts/run_retrieval.py --doc data/srs/your_file.pdf --query "Your question" -k 5
-
-# Generate features/tests from a document
-python scripts/run_document_pipeline.py data/srs/your_file.pdf --max-features 5
-
-# Validate the FAISS index
-python scripts/verify_rag_index.py
+$env:PYTHONPATH="src"
+python -m uvicorn api.main:app --host 127.0.0.1 --port 8001
 ```
 
-## Benchmark evaluation
+Docs:
 
-Run a full benchmark across all available question files:
+- Swagger UI: `http://127.0.0.1:8001/docs`
+- OpenAPI JSON: `http://127.0.0.1:8001/openapi.json`
+
+Health check:
+
+- `GET /api/v1/health`
+
+---
+
+## 7. API Usage Guide
+
+### Core endpoint groups
+
+- **Base**: root and health
+- **Projects**: CRUD, upload, stats, project-scoped retrieval
+- **Features**: generation + CRUD + project queries
+- **Test Cases**: generation + CRUD + exports
+- **RAG**: generic ingestion/retrieval/query/document pipeline endpoints
+- **Chatbot**: context/query endpoints
+
+### Recommended practical sequence
+
+1. Create project
+2. Upload SRS to project
+3. Run project retrieval and verify relevance
+4. Generate features
+5. Generate test cases for selected features
+
+### Why project-scoped retrieval matters
+
+Using `POST /api/v1/projects/{project_id}/retrieval` ensures:
+- retrieval only from that project’s vectors
+- no accidental cross-project contamination
+- consistent evaluation behavior
+
+---
+
+## 8. Evaluation Guide
+
+### Retrieval evaluation script
+
+Script:
+- `scripts/evaluate_retrieval_api.py`
+
+What it does:
+- creates temporary project(s)
+- uploads referenced SRS files
+- runs retrieval for each question in ground truth
+- computes `Hit@k`, `Precision@k`, `Recall@k`, `MRR`
+- saves report to `results/retrieval_api_eval/report.json`
+
+Run command:
 
 ```powershell
-python scripts/run_rag_benchmark.py --k 5 --threshold 0.72 --max-questions-per-srs 10
+python scripts/evaluate_retrieval_api.py --base-url http://127.0.0.1:8001/api/v1 --k 5 --mode unified_project
 ```
 
-Run a threshold sweep for analysis:
+Modes:
+
+- `unified_project`: uploads all files into one project (best for file-level benchmark)
+- `project_per_file`: one temporary project per file
+
+### Notebook for evaluation
+
+- `notebooks/06_retrieval_api_evaluation.executed.ipynb`
+
+Use it to:
+- run evaluation from notebook
+- inspect summary metrics
+- inspect per-query ranked outputs
+
+---
+
+## 9. Metrics Explained
+
+- `Hit@k`: percentage of queries where relevant target appears in top-k
+- `Precision@k`: relevant_in_top_k / k
+- `Recall@k`: relevant_in_top_k / number_of_relevant_targets
+- `MRR`: average reciprocal rank of the first relevant hit
+
+### Important interpretation note
+
+In file-level evaluation with one relevant file per query and `k=5`:
+- max `Precision@5` is `1/5 = 0.2`
+
+So `Precision@5 = 0.2` can still represent perfect file-level retrieval.
+
+---
+
+## 10. Data and File Conventions
+
+- `data/srs/`: canonical source/reference SRS files
+- `data/srs/uploads/`: runtime uploaded copies (generated by API upload)
+- `data/ground_truth/`: benchmark and validation datasets
+- `results/retrieval_api_eval/`: generated evaluation reports
+
+This split keeps source data clean while preserving runtime artifacts.
+
+---
+
+## 11. Troubleshooting
+
+- **All retrieval metrics are zero**
+  - verify correct `base-url`/port
+  - ensure vectors exist for the evaluated project(s)
+  - ensure file-name matching in evaluation uses stored upload names
+
+- **`Connection refused` during evaluation**
+  - API is not running on configured host/port
+  - start uvicorn and rerun
+
+- **Supabase errors**
+  - verify `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`
+  - confirm schema was created using `supabase_setup.sql`
+
+- **After clearing vectors**
+  - rerun upload flow before evaluating retrieval
+
+---
+
+## Quick Start (Minimal)
 
 ```powershell
-python scripts/run_rag_benchmark.py --k 5 --threshold 0.72 --max-questions-per-srs 10 --threshold-sweep 0.65,0.68,0.70,0.72,0.75
+cd D:\Qbrainpython\rag_lab
+.\.venv\Scripts\activate
+$env:PYTHONPATH="src"
+python -m uvicorn api.main:app --host 127.0.0.1 --port 8001
 ```
 
-## Data and outputs
+Then run:
 
-Input locations:
-
-- `data/srs/` — source SRS documents
-- `data/ground_truth/` — labeled retrieval and generation ground truth
-- `data/faiss_cache/` — persisted FAISS indexes
-
-Benchmark output directory:
-
-- `data/outputs/evaluation/rag_benchmark/`
-
-Common output files:
-
-- `overall_summary.csv`
-- `benchmark_full_results.csv`
-- `retrieval/retrieval_by_question.csv`
-- `generation/generation_by_question.csv`
-- `e2e/e2e_by_question.csv`
-- `diagnostics/failure_breakdown.csv`
-- `diagnostics/metrics_by_category.csv`
-
-## Results explanation
-
-- `overall_summary.csv`: A high-level summary of benchmark metrics across all documents and questions.
-- `benchmark_full_results.csv`: Detailed results per question, including retrieval, similarity scores, and final pass/fail status.
-- `retrieval/retrieval_by_question.csv`: Retrieval accuracy and score details for each question.
-- `generation/generation_by_question.csv`: Generation quality metrics for each question, including similarity and correctness.
-- `e2e/e2e_by_question.csv`: End-to-end results for each question from retrieval through generation.
-- `diagnostics/failure_breakdown.csv`: Breakdown of failure types such as `pass`, `generation_fail`, and `retrieval_fail`.
-- `diagnostics/metrics_by_category.csv`: Performance analysis by question category or document type.
-
-## Metrics tracked
-
-Retrieval metrics:
-
-- `hit_at_k`
-- `precision_at_k`
-- `recall_at_k`
-- `mrr`
-
-Generation metrics:
-
-- semantic `similarity` between generated and expected answers
-- `gen_correct` (threshold-based correctness)
-- `generation_accuracy`
-- `generation_avg_similarity`
-
-End-to-end metrics:
-
-- `e2e_success`
-- `e2e_success_rate`
-- `failure_type` (`pass`, `generation_fail`, `retrieval_fail`)
-
-## Interpreting percentage scores
-
-- Most benchmark scores are reported as decimals between `0` and `1`. A value like `0.78` means `78%`.
-- `hit_at_k`: e.g. `0.80` means the correct chunk was found in the top-k retrieved items for 80% of the questions.
-- `mrr`: mean reciprocal rank measures how early the correct chunk appears. A higher value closer to `1.0` means the correct chunk was retrieved near the top.
-- `similarity`: a value of `0.78` means the generated answer is 78% similar to the expected answer according to the chosen semantic metric.
-- `generation_accuracy`: a value of `0.76` means 76% of generated answers passed the generation-quality threshold.
-- `e2e_success` and `e2e_success_rate`: these show the proportion of questions that succeeded across both retrieval and generation. For example, `0.78` means 78% of questions ended with a successful full pipeline result.
-- `failure_type`: this explains why the pipeline failed on a question. `retrieval_fail` means the relevant context was not retrieved, while `generation_fail` means the retrieved context did not produce a correct answer.
-
-## Notebooks and analysis
-
-Explore the repo using the provided notebooks:
-
-- `01_rag_stage1_ingestion.executed.ipynb`
-- `02_rag_stage2_indexing.executed.ipynb`
-- `03_rag_stage3_retrieval.ipynb`
-- `04_rag_stage4_creation_features_tests.ipynb`
-- `10_rag_ragas_evaluation.ipynb`
-- `12_rag_benchmark_results_dashboard.executed.ipynb`
-
-## Notes
-
-- This workspace is built around OpenAI embedding and generation APIs.
-- Adjust model settings in the `.env` file or `src/qbrain_rag/infrastructure/llm.py` if needed.
-- Use `scripts/run_rag_benchmark.py` for full evaluation.
-- Use `scripts/verify_rag_index.py` to check index integrity.
+```powershell
+python scripts/evaluate_retrieval_api.py --base-url http://127.0.0.1:8001/api/v1 --k 5 --mode unified_project
+```
